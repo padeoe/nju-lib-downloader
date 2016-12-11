@@ -37,17 +37,11 @@ root.getChildren().forEach(
         );
 ```
 
-异常捕获
+错误恢复
 ```
-try {
-    book.download("G:\\Book\\", 5);
-} catch (BookDLException e) {
-    //错误日志，记录下载失的的单页
-    logPageFail(e, "C:\\Users\\padeoe\\Desktop\\libpdf\\pageDLFail.txt");
-    //输出所有下载失败的页及URL
-    e.getPageDLFailExceptions().forEach(pageDLException -> System.out.println(pageDLException));
-}
+new MissingPageCompletion("G:\\pageDLFail.txt").complete();//指定了错误日志路径
+//或
+new MissingPageCompletion().complete();//使用默认的错误日志路径
 ```
-
 <h2>特别感谢</h2>
 - [@Nifury](https://github.com/Nifury)

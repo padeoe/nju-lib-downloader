@@ -6,10 +6,9 @@ import org.jsoup.nodes.Element;
 import utils.network.MyHttpRequest;
 import utils.network.ReturnData;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,27 +25,28 @@ import java.util.regex.Pattern;
  */
 public class BookDownloader {
     private Book book;
-    Map<PageType, Integer> pageNumberMap;
-    String savePath = "G:\\Book\\";
-    String directory;
-    String urlPrefix;
-    PageType[] pageTypes = {PageType.COVER, PageType.BOOKNAME, PageType.LEGALINFO, PageType.INTRODUCTION,
+    private Map<PageType, Integer> pageNumberMap;
+    private String savePath = System.getProperty("user.dir");
+    private Path directory;
+    private String urlPrefix;
+    private PageType[] pageTypes = {PageType.COVER, PageType.BOOKNAME, PageType.LEGALINFO, PageType.INTRODUCTION,
             PageType.DIRECTORY, PageType.CONTENT, PageType.APPENDIX, PageType.BACKCOVER};
-    AtomicInteger needDownload = new AtomicInteger(1);
+    private AtomicInteger needDownload = new AtomicInteger(1);
+    public static final String ERROR_LOG_NAME = "error.log";
 
-    public void setSavePath(String savePath) {
+    void setSavePath(String savePath) {
         this.savePath = savePath;
     }
 
-    public BookDownloader(Book book) {
+    BookDownloader(Book book) {
         this.book = book;
     }
 
-    public BookDownloader(String bookid) {
+    BookDownloader(String bookid) {
         this.book = new Book(bookid);
     }
 
-    private static void download(String url, String pathname) throws IOException {
+    public static void download(String url, String pathname) throws IOException {
         ReturnData returnData = MyHttpRequest.action_returnbyte("GET", null, url, null, null, null, 2000);
         byte[] a = returnData.getData();
         File file = new File(pathname);
@@ -58,10 +58,22 @@ public class BookDownloader {
     /**
      * 下载书本书页的全部图片
      *
-     * @param threadNumber
-     * @throws IOException
+     * @param threadNumber 线程数
+     * @throws IOException     因为网络问题下载未开始
+     * @throws BookDLException 某些单页下载失败
      */
-    public void downloadPng(int threadNumber) throws IOException, BookDLException {
+    void downloadPng_noLog(int threadNumber) throws IOException, BookDLException {
+        String directoryName = book.getName() != null ? book.getName() : book.getId();
+        directoryName = directoryName.replaceAll("[/\\\\:\"*?<>|]", " ");
+        directory = Paths.get(savePath, directoryName);
+        File path = directory.toFile();
+        boolean success;
+        //若目录不存在，创建目录
+        if (path.exists()) {
+            System.out.println("已存在，跳过" + book.toString());
+            return;
+        }
+        success = path.mkdirs();
         //获取页面地址
         String url = book.getbookread();
         if (url == null || url.length() == 0) {
@@ -72,7 +84,7 @@ public class BookDownloader {
         String html = MyHttpRequest.get(url, null, "UTF-8", 2000);
         Document doc = Jsoup.parse(html);
         Element infoNode = doc.getElementsByTag("script").last();
-        pageNumberMap = new HashMap<PageType, Integer>();
+        pageNumberMap = new HashMap<>();
         int epage = 0;
         if (infoNode.dataNodes().size() > 0) {
             String paraJs = infoNode.dataNodes().get(0).getWholeData();
@@ -91,23 +103,13 @@ public class BookDownloader {
                     pageNumberMap.put(pageTypes[6], Integer.parseInt(matcher.group(8)));
                     pageNumberMap.put(pageTypes[7], Integer.parseInt(matcher.group(9)));
                     //修正正文页数服务器返回的实际是所有总页数的bug
-                    int n = 2 * Integer.parseInt(matcher.group(2)) - pageNumberMap.values().stream().mapToInt(number -> number.intValue()).sum();
+                    int n = 2 * Integer.parseInt(matcher.group(2)) - pageNumberMap.values().stream().mapToInt(number -> number).sum();
                     pageNumberMap.put(pageTypes[5], n);
                 }
             }
-            String directoryName = book.getName() != null ? book.getName() : book.getId();
-            directoryName = directoryName.replaceAll("[/\\\\:\"*?<>|]", " ");
-            directory = savePath + directoryName + "\\";
-            File path = new File(directory);
-            boolean success = true;
-            //目录不存在，创建目录
-            if (!path.exists()) {
-                success = path.mkdirs();
-            } else {
-                System.out.println(book.getName() + "已存在，跳过");
-                return;
-            }
-            Vector<PageDLFailException> pageDLFailExceptions = new Vector<PageDLFailException>();
+
+
+            Vector<PageDLFailException> pageDLFailExceptions = new Vector<>();
             if (success) {
                 for (int i = 0; i < pageTypes.length; i++) {
                     if (i != 5) {
@@ -120,6 +122,8 @@ public class BookDownloader {
                 }
                 try {
                     downloadContent(threadNumber);
+                    //记录书本信息
+                    logBookInfo();
                 } catch (BookDLException e) {
                     pageDLFailExceptions.addAll(e.getPageDLFailExceptions());
                 }
@@ -136,14 +140,42 @@ public class BookDownloader {
         }
     }
 
-    public void downloadContent(int threadNumber) throws BookDLException {
+    void downloadPng(int threadNumber, String errorLogPath) {
+        try {
+            downloadPng_noLog(threadNumber);
+        } catch (BookDLException e) {
+            logPageFail(e, errorLogPath);//错误日志，记录单页下载失败
+            e.getPageDLFailExceptions().forEach(pageDLException -> System.out.println(pageDLException));
+        } catch (IOException io) {//书下载失败，全书没有开始下载
+            logBookFail(errorLogPath);//错误日志，记录未下载书籍
+        }
+    }
+
+    void downloadPng(int threadNumber) {
+        downloadPng(threadNumber, ERROR_LOG_NAME);
+    }
+
+    /**
+     * 在同文件夹下创建记录{@code Book}信息的文件，
+     * 文件名是""info.txt""
+     */
+    private void logBookInfo() {
+        try {
+            FileWriter fileWriter = new FileWriter(new File(directory + "info.txt"));
+            fileWriter.write(book.toString());
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void downloadContent(int threadNumber) throws BookDLException {
         int firstPage = getFirstPage(PageType.CONTENT);//第一页的序号
         final int lastPage = firstPage + pageNumberMap.get(PageType.CONTENT) - 1;//最后一页序号
         //System.out.println("正文页码" + firstPage + "~" + lastPage);
         needDownload.set(firstPage);
-        Vector<PageDLFailException> pageDLFailExceptions = new Vector<PageDLFailException>();
-        ;
-        ArrayList<Thread> threadArrayList = new ArrayList<Thread>();
+        Vector<PageDLFailException> pageDLFailExceptions = new Vector<>();
+        ArrayList<Thread> threadArrayList = new ArrayList<>();
         for (int i = 0; i < threadNumber; i++) {
             threadArrayList.add(new Thread() {
                 @Override
@@ -154,7 +186,7 @@ public class BookDownloader {
                         if (downloading <= lastPage) {
                             //System.out.println("假装在下载 "+downloading);
                             try {
-                                download(PageType.CONTENT, downloading, new StringBuilder().append(downloading).append(".png").toString());
+                                download(PageType.CONTENT, downloading, String.valueOf(downloading) + ".png");
                             } catch (PageDLFailException e) {
                                 pageDLFailExceptions.add(e);
                             }
@@ -183,15 +215,15 @@ public class BookDownloader {
     /**
      * 下载某一种页类型的所有页
      *
-     * @param pageType
-     * @throws IOException
+     * @param pageType 页类型
+     * @throws BookDLException 某些页下载失败
      */
-    public void download(PageType pageType) throws BookDLException {
-        Vector<PageDLFailException> pageDLFailExceptions = new Vector<PageDLFailException>();
+    private void download(PageType pageType) throws BookDLException {
+        Vector<PageDLFailException> pageDLFailExceptions = new Vector<>();
         int base = getFirstPage(pageType);
         for (int i = 0; i < pageNumberMap.get(pageType); i++) {
             try {
-                download(pageType, i + 1, new StringBuilder().append(base + i).append(".png").toString());
+                download(pageType, i + 1, String.valueOf(base + i) + ".png");
             } catch (PageDLFailException e) {
                 pageDLFailExceptions.add(e);
             }
@@ -203,11 +235,11 @@ public class BookDownloader {
 
     private int getFirstPage(PageType pageType) {
         int base = 1;//该种类型页的第一页的页码
-        for (int i = 0; i < pageTypes.length; i++) {
-            if (pageTypes[i].equals(pageType)) {
+        for (PageType pageType1 : pageTypes) {
+            if (pageType1.equals(pageType)) {
                 break;
             } else {
-                base += pageNumberMap.get(pageTypes[i]);
+                base += pageNumberMap.get(pageType1);
             }
         }
         return base;
@@ -216,9 +248,9 @@ public class BookDownloader {
     /**
      * 下载某一种页类型的特定页
      *
-     * @param pageType
-     * @param page
-     * @throws IOException
+     * @param pageType 页类型
+     * @param page     图书列表的第几页。分页是由服务器做出的
+     * @throws PageDLFailException 某些页下载失败
      */
     private void download(PageType pageType, int page, String filename) throws PageDLFailException {
         int pageNumberLength = 6 - pageType.name.length();
@@ -230,7 +262,7 @@ public class BookDownloader {
         url.append(page);
         url.append(".jpg");
         String finalurl = url.toString();
-        String pathname = directory + filename;
+        String pathname = directory.resolve(filename).toString();
         try {
             download(finalurl, pathname);
         } catch (IOException e) {
@@ -243,6 +275,46 @@ public class BookDownloader {
         }
     }
 
+    /**
+     * 输出单页下载失败的日志，可以使用{@link spider.MissingPageCompletion}来读取错误日志并恢复
+     *
+     * @param bookDLException 单页失败异常
+     * @param pageFailLogPath 日志路径
+     */
+    private void logPageFail(BookDLException bookDLException, String pageFailLogPath) {
+        Vector<PageDLFailException> pageDLFailExceptions = bookDLException.getPageDLFailExceptions();
+        for (PageDLFailException pageDLFailException : pageDLFailExceptions) {
+            try {
+                FileWriter writer = new FileWriter(pageFailLogPath, true);
+                writer.write(pageDLFailException.toString());
+                writer.write(System.getProperty("line.separator"));
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    /**
+     * 输出整本书下载失败的日志，用于后期恢复(暂未完成)
+     *
+     * @param bookFailLogPath 日志路径
+     */
+    private void logBookFail(String bookFailLogPath) {
+        try {
+            FileWriter writer = new FileWriter(bookFailLogPath, true);
+            writer.write(book.getId() + " " + book.getName());
+            writer.write(System.getProperty("line.separator"));
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 书页的类型。每本书都由"封面"，"正文"，"目录"等若干种固定的页类型组成。
+     */
     enum PageType {
         COVER("cov", 1), BOOKNAME("bok", 2), LEGALINFO("leg", 3), INTRODUCTION("fow", 4), DIRECTORY("!", 5),
         CONTENT("", 6), APPENDIX("att", 7), BACKCOVER("cov", 8);

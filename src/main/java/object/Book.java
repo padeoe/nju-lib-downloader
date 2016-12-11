@@ -37,7 +37,7 @@ public class Book {
      *
      * @return
      */
-    public String getId() {
+    String getId() {
         return id;
     }
 
@@ -50,7 +50,7 @@ public class Book {
      *
      * @return 书名，包含书名号《》
      */
-    public String getName() {
+    String getName() {
         return name;
     }
 
@@ -136,13 +136,13 @@ public class Book {
      * 所属分类，最末层的分类，字符串描述，“>”分割层级，
      * 例如“数理科学和化学图书馆>数学>总论复分>总论”
      */
-    String detailCatalog;
+    private String detailCatalog;
 
     public String getCookie() {
         return cookie;
     }
 
-    public void setCookie(String cookie) {
+    void setCookie(String cookie) {
         this.cookie = cookie;
     }
 
@@ -181,8 +181,7 @@ public class Book {
         String para = "BID=" + id + "&ReadMode=0&pdfread=0&displaystyle=0";
         String Url = Controller.baseUrl + "/getbookread?" + para;
         String result = MyHttpRequest.getWithCookie(Url, null, cookie, "UTF-8", 1000);
-        String bookUrl = Controller.baseUrl + URLDecoder.decode(result);
-        return bookUrl;
+        return Controller.baseUrl + URLDecoder.decode(result);
     }
 
     private void resetCookie() throws IOException {
@@ -197,17 +196,23 @@ public class Book {
                 ", author='" + author + '\'' +
                 ", publishDate='" + publishDate + '\'' +
                 ", theme='" + theme + '\'' +
-                ", catalog=" + catalog +
+                ", catalog=" + catalog.getId() +
                 ", detailCatalog='" + detailCatalog + '\'' +
                 '}';
     }
 
-    public static void main(String[] args) {
-/*        try {
-            new Book("11595586").getPrams();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
+    /**
+     * 下载该书。将下载许多图片，书的每一页都是一张png图片。
+     * 将会在{@code pathname}下创建一个以书名命名的文件夹，并存储所有图片。
+     * 错误日志将在当前路径下名为"error.log"
+     *
+     * @param pathname     下载存储目录
+     * @param threadNumber 下载线程数
+     */
+    public void download(String pathname, int threadNumber) {
+        BookDownloader bookDownloader = new BookDownloader(this);
+        bookDownloader.setSavePath(pathname);
+        bookDownloader.downloadPng(threadNumber);
     }
 
     /**
@@ -215,13 +220,15 @@ public class Book {
      * 将会在{@code pathname}下创建一个以书名命名的文件夹，并存储所有图片。
      *
      * @param pathname     下载存储目录
-     * @param threadNumber 下载线程数
-     * @throws IOException
-     * @throws BookDLException 整本书都下载失败的错误
+     * @param threadNumber 线程数
+     * @param errorLogPath 错误日志路径
      */
-    public void download(String pathname, int threadNumber) throws IOException, BookDLException {
+    public void download(String pathname, int threadNumber, String errorLogPath) {
         BookDownloader bookDownloader = new BookDownloader(this);
         bookDownloader.setSavePath(pathname);
-        bookDownloader.downloadPng(threadNumber);
+        bookDownloader.downloadPng(threadNumber, errorLogPath);
+
     }
+
+
 }
