@@ -131,7 +131,7 @@ public class Book {
      * 譬如《数学的统一性》一书的{@link #detailCatalog}是“数理科学和化学图书馆>数学>总论复分>总论”
      * 但是该项可能只是“数学”
      */
-    Catalog catalog;
+    Catalog catalog = new Catalog("all");
     /**
      * 所属分类，最末层的分类，字符串描述，“>”分割层级，
      * 例如“数理科学和化学图书馆>数学>总论复分>总论”
@@ -212,7 +212,8 @@ public class Book {
     public void download(String pathname, int threadNumber) {
         BookDownloader bookDownloader = new BookDownloader(this);
         bookDownloader.setSavePath(pathname);
-        bookDownloader.downloadPng(threadNumber);
+        bookDownloader.setThreadNumber(threadNumber);
+        bookDownloader.downloadPng();
     }
 
     /**
@@ -226,9 +227,22 @@ public class Book {
     public void download(String pathname, int threadNumber, String errorLogPath) {
         BookDownloader bookDownloader = new BookDownloader(this);
         bookDownloader.setSavePath(pathname);
-        bookDownloader.downloadPng(threadNumber, errorLogPath);
-
+        bookDownloader.setThreadNumber(threadNumber);
+        bookDownloader.setErrorLogPath(errorLogPath);
+        bookDownloader.downloadPng();
     }
 
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(this.getId());
+    }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Book))
+            return false;
+        if (obj == this)
+            return true;
+        return this.id.equals(((Book) obj).id);
+    }
 }

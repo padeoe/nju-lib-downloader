@@ -9,7 +9,10 @@ import utils.network.MyHttpRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -189,7 +192,7 @@ public class Catalog {
      * @throws IOException
      */
     public Catalog loadChild() throws IOException {
-        resetCookie();
+        checkCookie();
         String Url = Controller.baseUrl + "/classifyview";
         String data = "fenlei=" + this.getId() + "&lib=markbook";
         String result = MyHttpRequest.postWithCookie(data, Url, null, cookie, "UTF-8", "UTF-8", 1000);
@@ -235,13 +238,14 @@ public class Catalog {
      * @return
      * @throws IOException
      */
-    public List<Book> getBooks(int page) throws IOException {
-        resetCookie();
+    public Set<Book> getBooks(int page) throws IOException {
+        checkCookie();
         String data = "fenlei=" + this.id + "&mark=all&Page=" + page + "&totalnumber=-1";
         String Url = Controller.baseUrl + "/markbook/classifybookview.jsp";
         String html = MyHttpRequest.postWithCookie(data, Url, null, cookie, "UTF-8", "GBK", 1000);
         //   System.out.println(html);
-        return getBooks(html);
+        Set<Book> books = getBooks(html);
+        return books;
 
     }
 
@@ -251,8 +255,18 @@ public class Catalog {
      * @return 分类下所有图书
      * @throws IOException
      */
-    public List<Book> getAllBooks() throws IOException {
-        resetCookie();
+    public Set<Book> getAllBooks() throws IOException {
+        return getAllBooks(5);
+    }
+
+    /**
+     * 获得分类下的所有图书
+     * @param threadNumber 线程数
+     * @return 图书集合
+     * @throws IOException 连接错误
+     */
+    public Set<Book> getAllBooks(int threadNumber) throws IOException {
+        checkCookie();
         String data = "fenlei=" + this.id + "&mark=all&Page=1&totalnumber=-1";
         String Url = Controller.baseUrl + "/markbook/classifybookview.jsp";
         String html = MyHttpRequest.postWithCookie(data, Url, null, cookie, "UTF-8", "GBK", 1000);
@@ -265,19 +279,123 @@ public class Catalog {
             String booksize = keyword.substring(keyword.lastIndexOf(",") + 1, keyword.length() - 1);
             int size = Integer.parseInt(booksize);
             System.out.println("一共 " + size + " 本书");
-            List<Book> books = getBooks(html);
-            for (int i = 2; i <= size / 10 + 1; i++) {
-                books.addAll(getBooks(i));
+            Set<Book> books = getBooks(html);
+            List<PageGetThread> threadList = new ArrayList<>();
+
+            AtomicInteger needGettedPage = new AtomicInteger(2);//需要获取的页码
+            int lastPage = size / 10 + 1;//最后一页的页码
+            //开始多线程刷所有页码
+            for (int threadN = 0; threadN < threadNumber; threadN++) {
+                threadList.add(new PageGetThread(needGettedPage, lastPage));
             }
+
+            for (PageGetThread thread : threadList) {
+                thread.start();
+            }
+            for (PageGetThread thread : threadList) {
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            threadList.forEach(pageGetThread -> books.addAll(pageGetThread.getThreadBooks()));
             return books;
         }
         return null;
     }
 
-    private List<Book> getBooks(String html) {
+    /**
+     * 下载分类下所有图书
+     * @param pathname 存储路径
+     * @param threadNumber 线程数
+     * @param errorLogPath 错误日志路径
+     * @throws IOException 连接失败的错误
+     */
+    public void downloadAllBooks(String pathname, int threadNumber, String errorLogPath) throws IOException {
+        checkCookie();
+        String data = "fenlei=" + this.id + "&mark=all&Page=1&totalnumber=-1";
+        String Url = Controller.baseUrl + "/markbook/classifybookview.jsp";
+        String html = MyHttpRequest.postWithCookie(data, Url, null, cookie, "UTF-8", "GBK", 1000);
+        //   System.out.println(html);
+        Document doc = Jsoup.parse(html);
+        Elements form = doc.select("a:contains(末页)");
+        if (!form.isEmpty()) {
+            String keyword = form.get(0).attr("href");
+            String booksize = keyword.substring(keyword.lastIndexOf(",") + 1, keyword.length() - 1);
+            int size = Integer.parseInt(booksize);
+            System.out.println("一共 " + size + " 本书");
+            Set<Book> books = getBooks(html);
+            Set<Book> downloading;
+            downloadBooks(books, pathname, threadNumber, errorLogPath);
+            int lastPage = size / 10 + 1;//最后一页的页码
+            int index = 1;
+            for (int i = lastPage; i >= 2; i--) {
+                downloading = getBooks(i);
+                for (Book book : downloading) {
+                    if (books.add(book)) {
+                        book.download(pathname, threadNumber, errorLogPath);
+                        index++;
+                    } else {
+                        System.out.println("服务器返回了重复书籍，跳过 " + book);
+                    }
+                }
+            }
+            System.out.println("去重后共" + books.size() + "书");
+            System.out.println("索引index记录的书本数是" + index);
+        }
+    }
+
+    private void downloadBooks(Set<Book> books, String pathname, int threadNumber, String errorLogPath) {
+        for (Book book : books) {
+            book.download(pathname, threadNumber, errorLogPath);
+        }
+    }
+
+
+    /**
+     * 获取所有图书列表的线程
+     */
+    class PageGetThread extends Thread {
+        Set<Book> books = new HashSet<>();
+        AtomicInteger needGettedPage;
+        int lastPage;
+
+        public PageGetThread(AtomicInteger needGettedPage, int lastPage) {
+            this.needGettedPage = needGettedPage;
+            this.lastPage = lastPage;
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                int gettingpage = needGettedPage.getAndIncrement();
+                if (gettingpage <= lastPage) {
+                    try {
+                        //  System.out.println("页数"+gettingpage);
+                        if (gettingpage % 10 == 0) {
+                            resetCookie();
+                        }
+                        books.addAll(getBooks(gettingpage));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+
+        public Set<Book> getThreadBooks() {
+            return books;
+        }
+    }
+
+
+    private Set<Book> getBooks(String html) {
         Document doc = Jsoup.parse(html);
         Elements elements = doc.select("li[style]");
-        ArrayList<Book> books = new ArrayList<Book>();
+        Set<Book> books = new HashSet<>();
         for (Element element : elements) {
             String name = null, id = null, author = null, publishDate = null, theme = null, detailCatalog = null;
             Elements nameNode = element.select("a[href=##]");
@@ -311,6 +429,7 @@ public class Catalog {
         return books;
     }
 
+
     /**
      * 查询当前分类下图书的数量。包含所有子分类下的图书
      *
@@ -318,7 +437,7 @@ public class Catalog {
      * @throws IOException
      */
     public int getBooksSize() throws IOException {
-        resetCookie();
+        checkCookie();
         String data = "fenlei=" + this.getId() + "&mark=all&Page=1&totalnumber=-1";
         String Url = Controller.baseUrl + "/markbook/classifybookview.jsp";
         String html = MyHttpRequest.postWithCookie(data, Url, null, cookie, "UTF-8", "GBK", 1000);
@@ -335,20 +454,13 @@ public class Catalog {
     }
 
 
-    public static void main(String[] args) {
-        try {
-            Catalog catalog = new Catalog("0O10");
-            List<Book> books = catalog.getAllBooks();
-            for (Book book : books) {
-                System.out.println(book);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void checkCookie() throws IOException {
+        cookie = (cookie == null) ? Controller.getSession() : cookie;
     }
 
     private void resetCookie() throws IOException {
-        cookie = (cookie == null) ? Controller.getSession() : cookie;
+        cookie = Controller.getSession();
+        System.out.println(cookie);
     }
 
 

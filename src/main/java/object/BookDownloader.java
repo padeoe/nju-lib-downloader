@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
  *         Date: 2016/12/09
  */
 public class BookDownloader {
+    private String errorLogPath = ERROR_LOG_NAME;
+    private int threadNumber = 5;
     private Book book;
     private Map<PageType, Integer> pageNumberMap;
     private String savePath = System.getProperty("user.dir");
@@ -33,10 +35,7 @@ public class BookDownloader {
             PageType.DIRECTORY, PageType.CONTENT, PageType.APPENDIX, PageType.BACKCOVER};
     private AtomicInteger needDownload = new AtomicInteger(1);
     public static final String ERROR_LOG_NAME = "error.log";
-
-    void setSavePath(String savePath) {
-        this.savePath = savePath;
-    }
+    public static final String INFO_FILE_NAME = "info.txt";
 
     BookDownloader(Book book) {
         this.book = book;
@@ -44,6 +43,23 @@ public class BookDownloader {
 
     BookDownloader(String bookid) {
         this.book = new Book(bookid);
+    }
+
+    public int getThreadNumber() {
+        return threadNumber;
+    }
+
+    public void setThreadNumber(int threadNumber) {
+        this.threadNumber = threadNumber;
+    }
+
+    public void setDirectory(String directoryString) {
+        String directoryName = directoryString.replaceAll("[/\\\\:\"*?<>|]", " ");
+        directory = Paths.get(savePath, directoryName);
+    }
+
+    void setSavePath(String savePath) {
+        this.savePath = savePath;
     }
 
     public static void download(String url, String pathname) throws IOException {
@@ -56,29 +72,17 @@ public class BookDownloader {
     }
 
     /**
-     * 下载书本书页的全部图片
+     * 从服务器查询书本下载所需的所有参数,包括书页url，书本页数，页类型
      *
-     * @param threadNumber 线程数
-     * @throws IOException     因为网络问题下载未开始
-     * @throws BookDLException 某些单页下载失败
+     * @return
+     * @throws IOException
      */
-    void downloadPng_noLog(int threadNumber) throws IOException, BookDLException {
-        String directoryName = book.getName() != null ? book.getName() : book.getId();
-        directoryName = directoryName.replaceAll("[/\\\\:\"*?<>|]", " ");
-        directory = Paths.get(savePath, directoryName);
-        File path = directory.toFile();
-        boolean success;
-        //若目录不存在，创建目录
-        if (path.exists()) {
-            System.out.println("已存在，跳过" + book.toString());
-            return;
-        }
-        success = path.mkdirs();
+    private boolean initialBookPara() throws IOException {
         //获取页面地址
         String url = book.getbookread();
         if (url == null || url.length() == 0) {
             System.out.println(book.getId() + " url获取失败");
-            return;
+            return false;
         }
         //获取书本参数，包括下载地址前缀，页数
         String html = MyHttpRequest.get(url, null, "UTF-8", 2000);
@@ -91,7 +95,7 @@ public class BookDownloader {
             Pattern pattern = Pattern.compile("var str='(.*)';.*epage = (\\d+);.*pages :\\[\\[1,(\\d+)\\],\\[1,(\\d+)\\],\\[1,(\\d+)\\]," +
                     "\\[1,(\\d+)\\], \\[1,(\\d+)\\], \\[spage, epage\\], \\[1,(\\d+)\\], \\[1,(\\d+)\\]\\],.*", Pattern.DOTALL);
             Matcher matcher = pattern.matcher(paraJs);
-            while (matcher.find()) {
+            if (matcher.find()) {
                 for (int i = 1; i <= 9; i++) {
                     urlPrefix = matcher.group(1);
                     pageNumberMap.put(pageTypes[5], Integer.parseInt(matcher.group(2)));
@@ -106,43 +110,143 @@ public class BookDownloader {
                     int n = 2 * Integer.parseInt(matcher.group(2)) - pageNumberMap.values().stream().mapToInt(number -> number).sum();
                     pageNumberMap.put(pageTypes[5], n);
                 }
-            }
-
-
-            Vector<PageDLFailException> pageDLFailExceptions = new Vector<>();
-            if (success) {
-                for (int i = 0; i < pageTypes.length; i++) {
-                    if (i != 5) {
-                        try {
-                            download(pageTypes[i]);
-                        } catch (BookDLException e) {
-                            pageDLFailExceptions.addAll(e.getPageDLFailExceptions());
-                        }
-                    }
-                }
-                try {
-                    downloadContent(threadNumber);
-                    //记录书本信息
-                    logBookInfo();
-                } catch (BookDLException e) {
-                    pageDLFailExceptions.addAll(e.getPageDLFailExceptions());
-                }
-                if (!pageDLFailExceptions.isEmpty()) {
-                    throw new BookDLException(pageDLFailExceptions);
-                }
+                return true;
             } else {
-                System.out.println("文件夹创建失败");
+                return false;
             }
-
         } else {
             System.out.println(book.getId() + " 参数获取失败");
+            return false;
+        }
+    }
+
+    /**
+     * 通过书页页数判断是否是同一本书，如果是则补全info文件，如果不是则不执行操作
+     *
+     * @throws IOException
+     */
+    private void checkOldDirByPageSize() throws IOException {
+        int oldBookSize = directory.toFile().listFiles().length;
+        //查询当前书本的页数
+        initialBookPara();
+        int newBookSize = pageNumberMap.values().stream().mapToInt(number -> number).sum();
+        //若书页数相同，假定为同一本书，帮他补全info文件
+        if (oldBookSize == newBookSize) {
+            logBookInfo();
+            System.out.println("已存在，跳过并补全了info文件" + book.toString());
+            return;
+        } else {
             return;
         }
     }
 
-    void downloadPng(int threadNumber, String errorLogPath) {
+    /**
+     * 文件夹已经创建完毕，开始下载
+     *
+     * @throws BookDLException
+     * @throws IOException
+     */
+    private void downloadFromMkdir() throws BookDLException, IOException {
+        File path = directory.toFile();
+        boolean success;
+        //若目录不存在，创建目录
+        if (path.exists()) {
+            handleOldDir();
+            return;
+        }
+        success = path.mkdirs();
+        if (success) {
+            Vector<PageDLFailException> pageDLFailExceptions = new Vector<>();
+            System.out.println("开始下载 " + book);
+            //获取书本参数
+            if (!initialBookPara()) {
+                return;
+            }
+            //首先顺序下载非正文内容
+            for (int i = 0; i < pageTypes.length; i++) {
+                if (i != 5) {
+                    try {
+                        download(pageTypes[i]);
+                    } catch (BookDLException e) {
+                        pageDLFailExceptions.addAll(e.getPageDLFailExceptions());
+                    }
+                }
+            }
+            try {
+                downloadContent();
+                //日志记录书本信息
+                logBookInfo();
+            } catch (BookDLException e) {
+                pageDLFailExceptions.addAll(e.getPageDLFailExceptions());
+            }
+            if (!pageDLFailExceptions.isEmpty()) {
+                throw new BookDLException(pageDLFailExceptions);
+            }
+        } else {
+            System.out.println("文件夹创建失败");
+        }
+
+
+    }
+
+    private void handleOldDir() throws IOException, BookDLException {
+        //开始检查是否真的是重复还是同名而已，根据书的id判断
+        //读取info文件
+        Path infoFilePath = directory.resolve(INFO_FILE_NAME);
+        File infoFile = infoFilePath.toFile();
+        if (infoFile.exists()) {
+            //info文件存在，读取info文件记录的书本id
+            Book oldbook;
+            oldbook = new InfoReader(infoFilePath.toString()).read();
+            //读出了旧的书本信息
+            if (oldbook != null) {
+                String oldBookId = oldbook.getId();
+                //两本书是同一本书
+                if (oldBookId.equals(book.getId())) {
+                    System.out.println("已存在，跳过" + book.toString());
+                    return;
+                }
+                //两本书是不同的书
+                else {
+                    //如果两本书作者不同，文件夹添加作者名进行命名,并开始下载
+                    if (!book.getAuthor().equals(oldbook.getAuthor())) {
+                        setDirectory(book.getName() + "-" + book.getAuthor());
+                        downloadFromMkdir();
+                    }
+                    //如果两本书作者相同，用作者名加id命名
+                    else {
+                        setDirectory(book.getName() + "-" + book.getAuthor() + "-" + book.getId());
+                        downloadFromMkdir();
+                    }
+                }
+            }
+            //info文件格式不正确，没有读出信息
+            //假定就文件夹是一本旧的书目,文件夹添加作者名进行命名,并开始下载
+            else {
+                setDirectory(book.getName() + "-" + book.getAuthor());
+                downloadFromMkdir();
+            }
+        } else {
+            //info文件不存在，比对书本页数数量是否是同一本书决定下一步操作
+            checkOldDirByPageSize();
+        }
+    }
+
+
+    /**
+     * 下载书本书页的全部图片
+     *
+     * @throws IOException     因为网络问题下载未开始
+     * @throws BookDLException 某些单页下载失败
+     */
+    void downloadPng_noLog() throws IOException, BookDLException {
+        downloadFromMkdir();
+    }
+
+    void downloadPng() {
+        setDirectory(book.getName() != null ? book.getName() : book.getId());
         try {
-            downloadPng_noLog(threadNumber);
+            downloadPng_noLog();
         } catch (BookDLException e) {
             logPageFail(e, errorLogPath);//错误日志，记录单页下载失败
             e.getPageDLFailExceptions().forEach(pageDLException -> System.out.println(pageDLException));
@@ -151,9 +255,6 @@ public class BookDownloader {
         }
     }
 
-    void downloadPng(int threadNumber) {
-        downloadPng(threadNumber, ERROR_LOG_NAME);
-    }
 
     /**
      * 在同文件夹下创建记录{@code Book}信息的文件，
@@ -161,7 +262,7 @@ public class BookDownloader {
      */
     private void logBookInfo() {
         try {
-            FileWriter fileWriter = new FileWriter(new File(directory + "info.txt"));
+            FileWriter fileWriter = new FileWriter(new File(directory.resolve("info.txt").toString()));
             fileWriter.write(book.toString());
             fileWriter.close();
         } catch (IOException e) {
@@ -169,7 +270,7 @@ public class BookDownloader {
         }
     }
 
-    private void downloadContent(int threadNumber) throws BookDLException {
+    private void downloadContent() throws BookDLException {
         int firstPage = getFirstPage(PageType.CONTENT);//第一页的序号
         final int lastPage = firstPage + pageNumberMap.get(PageType.CONTENT) - 1;//最后一页序号
         //System.out.println("正文页码" + firstPage + "~" + lastPage);
@@ -310,6 +411,10 @@ public class BookDownloader {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setErrorLogPath(String errorLogPath) {
+        this.errorLogPath = errorLogPath;
     }
 
     /**
