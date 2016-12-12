@@ -1,21 +1,20 @@
 package object;
 
-import java.util.Vector;
-
 /**
- * 下载某一本书时发生错误。包含此书所有页的下载时产生的错误。用于错误恢复
+ * 下载某一本书时发生错误。此异常发生在该书对应的文件夹创建之前。因此此书没有任何文件被下载。
  *
  * @author padeoe
- *         Date: 2016/12/10
+ *         Date: 2016/12/12
  */
 public class BookDLException extends Exception {
-    Vector<PageDLFailException> pageDLFailExceptions;
+    Book book;
 
-    public BookDLException(Vector<PageDLFailException> pageDLFailExceptionList) {
-        this.pageDLFailExceptions = pageDLFailExceptionList;
-    }
-
-    public Vector<PageDLFailException> getPageDLFailExceptions() {
-        return pageDLFailExceptions;
+    /**
+     * 创意一个初始化的{@code BookDLException}，并指定发生错误的书籍。
+     *
+     * @param book 发生下载错误的书籍
+     */
+    public BookDLException(Book book) {
+        this.book = book;
     }
 }

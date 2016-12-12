@@ -26,6 +26,7 @@ public class InfoReader {
 
     /**
      * 解析{@code Book}对象，如果未找到返回null
+     *
      * @return {@code Book}对象
      */
     public Book read() {

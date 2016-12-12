@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
  */
 public class MissingPageCompletion {
     private String logLocation;
+    private Pattern pattern = Pattern.compile("PageDLException\\{url='(.*)', location='(.*)'\\}");
 
     /**
      * 创建一个{@code MissingPageCompletion}对象并将日志路径指定为{@code logLocation}
@@ -47,7 +48,6 @@ public class MissingPageCompletion {
             Iterator<String> iterator = lines.iterator();
             while (iterator.hasNext()) {
                 String line = iterator.next();
-                Pattern pattern = Pattern.compile("PageDLFailException\\{url='(.*)', location='(.*)'\\}");
                 Matcher matcher = pattern.matcher(line);
                 String url, location;
                 if (matcher.find()) {
@@ -60,10 +60,7 @@ public class MissingPageCompletion {
                     } catch (IOException downloadFail) {
                         ;
                     }
-                } else {
-                    iterator.remove();
                 }
-
             }
 
             StringBuilder newLog = new StringBuilder();
@@ -82,5 +79,18 @@ public class MissingPageCompletion {
 
     public void setLogLocation(String logLocation) {
         this.logLocation = logLocation;
+    }
+
+    public Pattern getPattern() {
+        return pattern;
+    }
+
+    /**
+     * 设置日志的单行格式
+     *
+     * @param pattern
+     */
+    public void setPattern(Pattern pattern) {
+        this.pattern = pattern;
     }
 }

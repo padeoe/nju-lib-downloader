@@ -158,11 +158,10 @@ public class Catalog {
      *           需要和<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a>定义的格式一致
      */
     public Catalog(String id) {
-        new String("i");
         this.id = id;
         this.name = null;
         this.parent = null;
-        children = new ArrayList<Catalog>();
+        children = new ArrayList<>();
         this.isLeaf = false;
         this.allowsChildren = true;
         this.isLoaded = false;
@@ -175,11 +174,10 @@ public class Catalog {
      * 那么你应该使用该方法查看<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a>服务器
      * 支持的所有分类
      *
-     * @return
+     * @return 根目录，子节点尚未被加载
      */
     public static Catalog getRootCatalog() {
-        Catalog root = new Catalog("all", "根目录", null, false, true, false);
-        return root;
+        return new Catalog("all", "根目录", null, false, true, false);
     }
 
     /**
@@ -188,10 +186,9 @@ public class Catalog {
      * <p>
      * 如需递归加载子分类，调用{@link #loadAllChild()}
      *
-     * @return
-     * @throws IOException
+     * @throws IOException 从服务器查询子节点出错
      */
-    public Catalog loadChild() throws IOException {
+    public void loadChild() throws IOException {
         checkCookie();
         String Url = Controller.baseUrl + "/classifyview";
         String data = "fenlei=" + this.getId() + "&lib=markbook";
@@ -209,7 +206,6 @@ public class Catalog {
             this.addChild(child);
         }
         this.isLoaded = true;
-        return this;
     }
 
 
@@ -217,7 +213,7 @@ public class Catalog {
      * 迭代加载所有子分类。
      * 直至加载到每个分类的末层分类。
      *
-     * @throws IOException
+     * @throws IOException 从服务器查询时出错
      */
     public void loadAllChild() throws IOException {
         if (allowsChildren) {
@@ -234,9 +230,9 @@ public class Catalog {
      * <p>
      * 页数的最大值可以根据{@link #getBooksSize()}自行计算
      *
-     * @param page
-     * @return
-     * @throws IOException
+     * @param page 图书列表的页码
+     * @return 列表该页记录的图书
+     * @throws IOException 从服务器查询书本列表时出错
      */
     public Set<Book> getBooks(int page) throws IOException {
         checkCookie();
@@ -253,7 +249,7 @@ public class Catalog {
      * 获得某分类下的所有图书
      *
      * @return 分类下所有图书
-     * @throws IOException
+     * @throws IOException 从服务器查询书本列表时出错
      */
     public Set<Book> getAllBooks() throws IOException {
         return getAllBooks(5);
@@ -261,6 +257,7 @@ public class Catalog {
 
     /**
      * 获得分类下的所有图书
+     *
      * @param threadNumber 线程数
      * @return 图书集合
      * @throws IOException 连接错误
@@ -273,7 +270,7 @@ public class Catalog {
         //   System.out.println(html);
         Document doc = Jsoup.parse(html);
         Elements form = doc.select("a:contains(末页)");
-        ;
+
         if (!form.isEmpty()) {
             String keyword = form.get(0).attr("href");
             String booksize = keyword.substring(keyword.lastIndexOf(",") + 1, keyword.length() - 1);
@@ -307,7 +304,8 @@ public class Catalog {
 
     /**
      * 下载分类下所有图书
-     * @param pathname 存储路径
+     *
+     * @param pathname     存储路径
      * @param threadNumber 线程数
      * @param errorLogPath 错误日志路径
      * @throws IOException 连接失败的错误
@@ -444,7 +442,7 @@ public class Catalog {
         // System.out.println(html);
         Document doc = Jsoup.parse(html);
         Elements form = doc.select("a:contains(末页)");
-        ;
+
         if (!form.isEmpty()) {
             String keyword = form.get(0).attr("href");
             String booksize = keyword.substring(keyword.lastIndexOf(",") + 1, keyword.length() - 1);

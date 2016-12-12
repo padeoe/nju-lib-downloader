@@ -6,11 +6,11 @@ package object;
  * @author padeoe
  *         Date: 2016/12/10
  */
-public class PageDLFailException extends Exception {
+public class PageDLException extends Exception {
     private String url;
     private String location;
 
-    public PageDLFailException(String url, String location) {
+    public PageDLException(String url, String location) {
         super();
         this.url = url;
         this.location = location;
@@ -26,7 +26,7 @@ public class PageDLFailException extends Exception {
 
     @Override
     public String toString() {
-        return "PageDLFailException{" +
+        return "PageDLException{" +
                 "url='" + url + '\'' +
                 ", location='" + location + '\'' +
                 '}';
