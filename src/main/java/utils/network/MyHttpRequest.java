@@ -8,6 +8,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,8 +24,9 @@ public class MyHttpRequest {
         if (returnData.data != null) {
             result = new String(returnData.data, 0, returnData.data.length, outputEncoding);
         }
-        if (returnData.cookie != null) {
-            return new String[]{result, returnData.cookie};
+        List<String> cookies = returnData.getHeaders().get("Set-Cookie");
+        if (cookies != null && cookies.get(0) != null) {
+            return new String[]{result, cookies.get(0)};
         }
         return new String[]{result};
     }
@@ -116,16 +118,9 @@ public class MyHttpRequest {
             }
         }
 
-        String newCookie;
-        newCookie = connection.getHeaderField("Set-Cookie");
-        if (newCookie != null) {
-            newCookie = newCookie.substring(0, newCookie.indexOf(";"));
-        }
+        Map<String, List<String>> headers = connection.getHeaderFields();
         connection.disconnect();
-        if (newCookie != null) {
-            return new ReturnData(myByteArray.getBuffer(), newCookie);
-        }
-        return new ReturnData(myByteArray.getBuffer(), null);
+        return new ReturnData(myByteArray.getBuffer(), headers);
     }
 
     /**

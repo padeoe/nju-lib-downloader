@@ -9,10 +9,7 @@ import utils.network.ReturnData;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,7 +83,13 @@ public class BookDownloader {
     public static void download(String url, String pathname) throws IOException {
         ReturnData returnData = MyHttpRequest.action_returnbyte("GET", null, url, null, null, null, 2000);
         byte[] a = returnData.getData();
-        File file = new File(pathname);
+        List<String> types = returnData.getHeaders().get("Content-Type");
+        String suffix = ".png";
+        if (types != null && types.get(0) != null) {
+            suffix = types.get(0).substring(types.get(0).indexOf('/') + 1, types.get(0).length()).toLowerCase();
+            suffix = suffix.equals("jpeg") ? ".jpg" : (suffix.equals("png") ? ".png" : suffix);
+        }
+        File file = new File(pathname + suffix);
         BufferedOutputStream bf = new BufferedOutputStream(new FileOutputStream(file));
         bf.write(a, 0, a.length);
         bf.close();
@@ -322,7 +325,7 @@ public class BookDownloader {
                         if (downloading <= lastPage) {
                             //System.out.println("假装在下载 "+downloading);
                             try {
-                                download(PageType.CONTENT, downloading, String.valueOf(downloading) + ".png");
+                                download(PageType.CONTENT, downloading, String.valueOf(downloading));
                             } catch (PageDLException e) {
                                 pageDLExceptions.add(e);
                             }
@@ -359,7 +362,7 @@ public class BookDownloader {
         int base = getFirstPage(pageType);
         for (int i = 0; i < pageNumberMap.get(pageType); i++) {
             try {
-                download(pageType, i + 1, String.valueOf(base + i) + ".png");
+                download(pageType, i + 1, String.valueOf(base + i));
             } catch (PageDLException e) {
                 pageDLExceptions.add(e);
             }
