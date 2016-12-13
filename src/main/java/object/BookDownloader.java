@@ -157,8 +157,8 @@ public class BookDownloader {
      * @throws BookDLException 从服务器查询书本参数时出错
      */
     private void checkOldDirByPageSize() throws BookDLException {
-        File[]oldfiles=directory.toFile().listFiles();
-        int oldBookSize = oldfiles==null?0:oldfiles.length;
+        File[] oldfiles = directory.toFile().listFiles();
+        int oldBookSize = oldfiles == null ? 0 : oldfiles.length;
         //查询当前书本的页数
         initialBookPara();
         int newBookSize = pageNumberMap.values().stream().mapToInt(number -> number).sum();
@@ -175,7 +175,7 @@ public class BookDownloader {
      * 如果文件夹不存在，将会初始化参数并调用{@link #downloadFromParaSetDone()} 进行下一步处理
      *
      * @throws BookPagesDLException 书本下载过程中发生了缺页
-     * @throws BookDLException 书本下载未开始
+     * @throws BookDLException      书本下载未开始
      */
     private void downloadFromMkdir() throws BookPagesDLException, BookDLException {
         File path = directory.toFile();
@@ -232,7 +232,7 @@ public class BookDownloader {
      * 如果是同一本书，将跳过；如果不是同一本书，将重新设置保存路径和文件夹名，并调用{@link #downloadFromMkdir()}进行下一步处理
      *
      * @throws BookPagesDLException 书本下载过程中发生了缺页
-     * @throws BookDLException 书本下载未开始
+     * @throws BookDLException      书本下载未开始
      */
     private void handleOldDir() throws BookPagesDLException, BookDLException {
         //开始检查是否真的是重复还是同名而已，根据书的id判断
@@ -420,14 +420,7 @@ public class BookDownloader {
     private void logPageFail(BookPagesDLException bookPagesDLException, String pageFailLogPath) {
         Vector<PageDLException> pageDLExceptions = bookPagesDLException.getPageDLExceptions();
         for (PageDLException pageDLException : pageDLExceptions) {
-            try {
-                FileWriter writer = new FileWriter(pageFailLogPath, true);
-                writer.write(pageDLException.toString());
-                writer.write(System.getProperty("line.separator"));
-                writer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            writeFile(pageFailLogPath, pageDLException.toString());
         }
 
     }
@@ -438,9 +431,13 @@ public class BookDownloader {
      * @param bookFailLogPath 日志路径
      */
     private void logBookFail(String bookFailLogPath) {
+        writeFile(bookFailLogPath, book.toString());
+    }
+
+    private void writeFile(String filepath, String content) {
         try {
-            FileWriter writer = new FileWriter(bookFailLogPath, true);
-            writer.write(book.getId() + " " + book.getName());
+            FileWriter writer = new FileWriter(filepath, true);
+            writer.write(content);
             writer.write(System.getProperty("line.separator"));
             writer.close();
         } catch (IOException e) {

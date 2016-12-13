@@ -19,7 +19,7 @@ public class Start {
         // 格式必须和<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a>一致
         Catalog root = new Catalog("0T0P");
         try {
-            root.downloadAllBooks("G:\\Book\\", 5, "G:\\未分类\\pageDLFail.txt");
+            root.downloadWithCataDir("G:\\", 5, "G:\\未分类\\pageDLFail.txt");
         } catch (IOException e) {
             e.printStackTrace();
         }

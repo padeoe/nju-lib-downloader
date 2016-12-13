@@ -8,6 +8,7 @@ import spider.Controller;
 import utils.network.MyHttpRequest;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -224,6 +225,26 @@ public class Catalog {
         }
     }
 
+
+    /**
+     * 下载分类下所有图书，会迭代测创建分类文件夹
+     *
+     * @param pathname     存储路径。将在该路径下创建多级分类目录并保存下载的图书
+     * @param threadNumber 线程数
+     * @param errorLogPath 错误日志路径
+     * @throws IOException 连接失败的错误
+     */
+    public void downloadWithCataDir(String pathname, int threadNumber, String errorLogPath) throws IOException {
+        if (allowsChildren) {
+            loadChild();
+            for (Catalog child : getChildren()) {
+                child.downloadWithCataDir(Paths.get(pathname, name == null ? id : name).toString(), threadNumber, errorLogPath);
+            }
+        } else {
+            downloadAllBooks(Paths.get(pathname, name == null ? id : name).toString(), threadNumber, errorLogPath);
+        }
+    }
+
     /**
      * 获取该分类下图书列表的第{@code page}页。
      * 图书列表的分页时服务器做的，每页最多10条图书。
@@ -303,9 +324,10 @@ public class Catalog {
     }
 
     /**
-     * 下载分类下所有图书
+     * 下载分类下所有图书。
+     * 所有书籍将直接保存在{@code pathname}目录下，每本书一个文件夹，以书名命名。如同名，则加作者名，如又同名，加书本编号
      *
-     * @param pathname     存储路径
+     * @param pathname     存储路径。书本文件夹所在的上级路径
      * @param threadNumber 线程数
      * @param errorLogPath 错误日志路径
      * @throws IOException 连接失败的错误
@@ -339,8 +361,7 @@ public class Catalog {
                     }
                 }
             }
-            System.out.println("去重后共" + books.size() + "书");
-            System.out.println("索引index记录的书本数是" + index);
+            System.out.println("去重后共" + books.size() + "书，实际下载了" + (index + 10) + "本书(含失败)");
         }
     }
 
@@ -441,11 +462,9 @@ public class Catalog {
         String html = MyHttpRequest.postWithCookie(data, Url, null, cookie, "UTF-8", "GBK", 1000);
         // System.out.println(html);
         Document doc = Jsoup.parse(html);
-        Elements form = doc.select("a:contains(末页)");
-
+        Elements form = doc.select("input[name=totalnumber]");
         if (!form.isEmpty()) {
-            String keyword = form.get(0).attr("href");
-            String booksize = keyword.substring(keyword.lastIndexOf(",") + 1, keyword.length() - 1);
+            String booksize = form.get(0).attr("value");
             return Integer.parseInt(booksize);
         }
         return 0;
