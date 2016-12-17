@@ -200,6 +200,16 @@ public class Book {
                 ", detailCatalog='" + detailCatalog + '\'' +
                 '}';
     }
+    /**
+     * 下载该书。将下载许多图片，书的每一页都是一张png图片。
+     * 将会在{@code pathname}下创建一个以书名命名的文件夹，并存储所有图片。
+     * 错误日志将在当前路径下名为"error.log"
+     *
+     */
+    public void download() {
+        BookDownloader bookDownloader = new BookDownloader(this);
+        bookDownloader.downloadPng();
+    }
 
     /**
      * 下载该书。将下载许多图片，书的每一页都是一张png图片。

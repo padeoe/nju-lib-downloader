@@ -131,7 +131,6 @@ public class BookDownloader {
                     "\\[1,(\\d+)\\], \\[1,(\\d+)\\], \\[spage, epage\\], \\[1,(\\d+)\\], \\[1,(\\d+)\\]\\],.*", Pattern.DOTALL);
             Matcher matcher = pattern.matcher(paraJs);
             if (matcher.find()) {
-                for (int i = 1; i <= 9; i++) {
                     urlPrefix = matcher.group(1);
                     pageNumberMap.put(pageTypes[5], Integer.parseInt(matcher.group(2)));
                     pageNumberMap.put(pageTypes[0], Integer.parseInt(matcher.group(3)));
@@ -141,10 +140,6 @@ public class BookDownloader {
                     pageNumberMap.put(pageTypes[4], Integer.parseInt(matcher.group(7)));
                     pageNumberMap.put(pageTypes[6], Integer.parseInt(matcher.group(8)));
                     pageNumberMap.put(pageTypes[7], Integer.parseInt(matcher.group(9)));
-                    //修正正文页数服务器返回的实际是所有总页数的bug
-                    int n = 2 * Integer.parseInt(matcher.group(2)) - pageNumberMap.values().stream().mapToInt(number -> number).sum();
-                    pageNumberMap.put(pageTypes[5], n);
-                }
             } else {
                 throw new BookDLException(book);
             }
@@ -310,9 +305,9 @@ public class BookDownloader {
 
     private void downloadContent() throws BookPagesDLException {
         int firstPage = getFirstPage(PageType.CONTENT);//第一页的序号
-        final int lastPage = firstPage + pageNumberMap.get(PageType.CONTENT) - 1;//最后一页序号
+        final int pageSize = pageNumberMap.get(PageType.CONTENT);//正文总页数
         //System.out.println("正文页码" + firstPage + "~" + lastPage);
-        needDownload.set(firstPage);
+        needDownload.set(1);
         Vector<PageDLException> pageDLExceptions = new Vector<>();
         ArrayList<Thread> threadArrayList = new ArrayList<>();
         for (int i = 0; i < threadNumber; i++) {
@@ -322,10 +317,10 @@ public class BookDownloader {
                     super.run();
                     while (true) {
                         int downloading = needDownload.getAndIncrement();
-                        if (downloading <= lastPage) {
+                        if (downloading <= pageSize) {
                             //System.out.println("假装在下载 "+downloading);
                             try {
-                                download(PageType.CONTENT, downloading, String.format("%04d", downloading));
+                                download(PageType.CONTENT, downloading, String.format("%04d", firstPage+downloading-1));
                             } catch (PageDLException e) {
                                 pageDLExceptions.add(e);
                             }
@@ -362,7 +357,7 @@ public class BookDownloader {
         int base = getFirstPage(pageType);
         for (int i = 0; i < pageNumberMap.get(pageType); i++) {
             try {
-                download(pageType, i + 1, String.format("%04d", String.valueOf(base + i)));
+                download(pageType, i + 1, String.format("%04d", base + i));
             } catch (PageDLException e) {
                 pageDLExceptions.add(e);
             }
@@ -388,7 +383,7 @@ public class BookDownloader {
      * 下载某一种页类型的特定页
      *
      * @param pageType 页类型
-     * @param page     图书列表的第几页。分页是由服务器做出的
+     * @param page     图书的页码
      * @throws PageDLException 某些页下载失败
      */
     private void download(PageType pageType, int page, String filename) throws PageDLException {

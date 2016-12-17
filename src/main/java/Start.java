@@ -1,3 +1,4 @@
+import object.Book;
 import object.Catalog;
 
 import java.io.IOException;

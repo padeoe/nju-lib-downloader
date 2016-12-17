@@ -246,6 +246,16 @@ public class Catalog {
     }
 
     /**
+     * 下载分类下所有图书，会迭代测创建分类文件夹
+     * 下载存储路径为当前路径，线程数为5，错误日志将保存在当前路径，文件名为{@link BookDownloader#ERROR_LOG_NAME}
+     * 可以调用重载{@link #downloadWithCataDir(String, int, String)}设置参数
+     * @throws IOException 连接失败的错误
+     */
+    public void downloadWithCataDir() throws IOException {
+        downloadWithCataDir(System.getProperty("user.dir"),5,Paths.get(System.getProperty("user.dir"),BookDownloader.ERROR_LOG_NAME).toString());
+    }
+
+    /**
      * 获取该分类下图书列表的第{@code page}页。
      * 图书列表的分页时服务器做的，每页最多10条图书。
      * <p>
