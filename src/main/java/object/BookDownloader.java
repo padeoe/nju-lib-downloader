@@ -325,7 +325,7 @@ public class BookDownloader {
                         if (downloading <= lastPage) {
                             //System.out.println("假装在下载 "+downloading);
                             try {
-                                download(PageType.CONTENT, downloading, String.valueOf(downloading));
+                                download(PageType.CONTENT, downloading, String.format("%04d", downloading));
                             } catch (PageDLException e) {
                                 pageDLExceptions.add(e);
                             }
@@ -362,7 +362,7 @@ public class BookDownloader {
         int base = getFirstPage(pageType);
         for (int i = 0; i < pageNumberMap.get(pageType); i++) {
             try {
-                download(pageType, i + 1, String.valueOf(base + i));
+                download(pageType, i + 1, String.format("%04d", String.valueOf(base + i)));
             } catch (PageDLException e) {
                 pageDLExceptions.add(e);
             }

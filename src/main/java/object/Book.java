@@ -50,7 +50,7 @@ public class Book {
      *
      * @return 书名，包含书名号《》
      */
-    String getName() {
+    public String getName() {
         return name;
     }
 

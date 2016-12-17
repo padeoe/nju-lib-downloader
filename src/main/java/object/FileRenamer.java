@@ -15,8 +15,7 @@ import java.util.Arrays;
  */
 public class FileRenamer {
     public static void main(String args[]) {
-        renameSuffix("G:\\Book");
-        renameSuffix("G:\\Book");
+        renameZero("G:\\Test\\");
     }
 
     public static void renameZero(String rootDirPath) {
@@ -34,20 +33,22 @@ public class FileRenamer {
         if (dir.isDirectory()) {
             System.out.println("正在处理" + dir.getName());
             File files[] = dir.listFiles();
-            for (File file : files) {
-                String name = file.getName();
-                if (name.endsWith("png")) {
-                    String prefix = name.substring(0, name.indexOf('.'));
-                    name = name.replaceAll(prefix, String.format("%04d", Integer.parseInt(prefix)));
-                    try {
-                        Files.move(file.toPath(), new File(dir.getPath() + "\\" + name).toPath());
-                    } catch (IOException e) {
-                        System.out.println(file.toString());
-                    }
-                }
-            }
+            Arrays.asList(files).parallelStream().forEach(file -> rename(dir, file));
         } else {
             System.out.println(dir.getName() + "不是目录，跳过");
+        }
+    }
+
+    private static void rename(File dir, File file) {
+        String name = file.getName();
+        if (name.endsWith("png") || name.endsWith("jpg")) {
+            String prefix = name.substring(0, name.indexOf('.'));
+            name = name.replaceAll(prefix, String.format("%04d", Integer.parseInt(prefix)));
+            try {
+                Files.move(file.toPath(), new File(dir.getPath() + "\\" + name).toPath());
+            } catch (IOException e) {
+                System.out.println(file.toString());
+            }
         }
     }
 
