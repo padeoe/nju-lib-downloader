@@ -27,6 +27,11 @@ import java.util.regex.Pattern;
 public class BookDownloader {
     private String errorLogPath = ERROR_LOG_NAME;
     private int threadNumber = 5;
+
+    public Book getBook() {
+        return book;
+    }
+
     private Book book;
     private Map<PageType, Integer> pageNumberMap;
     private String savePath = System.getProperty("user.dir");
@@ -148,6 +153,7 @@ public class BookDownloader {
         bf.close();
     }
 
+
     /**
      * 初始化下载参数，从服务器查询书本下载所需的参数,包括书页url，书本页数，页类型
      * 执行后
@@ -159,12 +165,15 @@ public class BookDownloader {
         String url;
         try {
             url = book.getbookread();
+            getBookPara(url);
         } catch (IOException e) {
             e.printStackTrace();
             throw new BookDLException(book);
         }
+    }
+
+    public String getBookViewPageHtml(String url) throws BookDLException {
         if (url == null || url.length() == 0) {
-            System.out.println(book.getId() + " url获取失败");
             throw new BookDLException(book);
         }
         //获取书本参数，包括下载地址前缀，页数
@@ -175,6 +184,11 @@ public class BookDownloader {
             e.printStackTrace();
             throw new BookDLException(book);
         }
+        return html;
+    }
+
+    private void getBookPara(String url) throws BookDLException {
+        String html=getBookViewPageHtml(url);
         Document doc = Jsoup.parse(html);
         Element infoNode = doc.getElementsByTag("script").last();
         pageNumberMap = new HashMap<>();
@@ -333,7 +347,7 @@ public class BookDownloader {
     /**
      * 将书本下载保存为图片格式，书的每一页将会保存为一张图片
      */
-    void downloadAllImages() {
+    public void downloadAllImages() {
         setDirectory(book.getName() != null ? book.getName() : book.getId());
         try {
             downloadFromMkdir();

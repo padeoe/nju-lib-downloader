@@ -1,5 +1,10 @@
 package object;
 
+import object.exception.BookDLException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import spider.Controller;
 import utils.network.MyHttpRequest;
 
@@ -37,7 +42,7 @@ public class Book {
      *
      * @return
      */
-    String getId() {
+    public String getId() {
         return id;
     }
 
@@ -100,7 +105,7 @@ public class Book {
     /**
      * 获取书本所在分类
      *
-     * @return 书本所在分类，不一定是末级目录
+     * @return 书本所在分类
      */
     public Catalog getCatalog() {
         return catalog;
@@ -127,9 +132,7 @@ public class Book {
     private String publishDate;
     private String theme;
     /**
-     * 所属分类,不一定是书的最具体的分类，可能是书的二级分类目录。
-     * 譬如《数学的统一性》一书的{@link #detailCatalog}是“数理科学和化学图书馆>数学>总论复分>总论”
-     * 但是该项可能只是“数学”
+     * 所属分类
      */
     Catalog catalog = new Catalog("all");
     /**
@@ -146,7 +149,7 @@ public class Book {
         this.cookie = cookie;
     }
 
-    public static String cookie;
+    private String cookie;
 
     /**
      * 初始化一个新创建的{@code Book}对象。需要{@code Book}的所有属性。
@@ -168,6 +171,50 @@ public class Book {
         this.theme = theme;
         this.catalog = catalog;
         this.detailCatalog = detailCatalog;
+    }
+
+
+    /**
+     * 通过在线阅览的地址来获取{@code Book}对象
+     *
+     * @param onlineReadUrl 书本的在线阅读地址
+     * @return Book对象，仅指定了id
+     */
+    public static Book getBookFromUrl(String onlineReadUrl) {
+        for (String para : onlineReadUrl.split("&")) {
+            if (para.startsWith("ssnumber=")) {
+                Book book= new Book(para.substring(9, para.length()));
+                book.fillBookInfoByUrl(onlineReadUrl);
+                return book;
+            }
+        }
+        return null;
+    }
+
+    public static void main(String[] args) {
+       Book book= Book.getBookFromUrl("http://114.212.7.104:8181/Jpath_sky/DsrPath.do?code=153BB79FEDBAFB093F90DDD4F90950EA&ssnumber=13488955&netuser=1&jpgreadmulu=1&displaystyle=0&channel=0&ipside=0");
+    }
+
+    public void fillBookInfoByUrl(String url){
+        try {
+            String html=new BookDownloader(this).getBookViewPageHtml(url);
+            html=html.replaceAll("<!--","<");
+            html=html.replaceAll("-->","");
+            Document doc = Jsoup.parse(html);
+            Elements nameNode=doc.getElementsByTag("title");
+            this.name=nameNode.text();
+            Elements infoNode=doc.getElementsByTag("span").not("[style]");
+            for(Element node:infoNode){
+                if(node.text().startsWith("作者：")){
+                    this.author=node.text().substring(3,node.text().length());
+                }
+                if(node.text().startsWith("出版日期：")){
+                    this.publishDate=node.text().substring(5,node.text().length());
+                }
+            }
+        } catch (BookDLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

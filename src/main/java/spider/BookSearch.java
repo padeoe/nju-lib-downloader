@@ -37,7 +37,7 @@ public class BookSearch {
     /**
      * 通过指定sql查询的where子句进行图书查询
      *
-     * @param sqlWhereClause 一些已知字段包括"书名","主题词","出版年份","作者"
+     * @param sqlWhereClause 一些已知字段包括"书名","主题词","出版日期","作者"
      * @param page           查询结果列表的页码
      * @param rootCatalog    查询到的书本将会添加进该目录结构
      * @return
@@ -71,7 +71,7 @@ public class BookSearch {
     /**
      * 通过指定sql查询的where子句进行图书查询
      *
-     * @param sqlWhereClause where子句，一些已知字段包括"书名","主题词","出版年份","作者"
+     * @param sqlWhereClause where子句，一些已知字段包括"书名","主题词","出版日期","作者"
      * @param page           查询结果列表的页码
      * @return 如果没有匹配结果，返回空的对象
      * @throws IOException
@@ -83,7 +83,7 @@ public class BookSearch {
     /**
      * 通过指定sql查询的where子句进行图书查询，只返回第一页结果。
      *
-     * @param sqlWhereClause where子句，一些已知字段包括"书名","主题词","出版年份","作者"
+     * @param sqlWhereClause where子句，一些已知字段包括"书名","主题词","出版日期","作者"
      * @return 如果没有匹配结果，返回空的对象
      * @throws IOException
      */
@@ -94,7 +94,7 @@ public class BookSearch {
     /**
      * 通过指定sql查询的where子句进行图书查询
      *
-     * @param sqlWhereClause where子句，一些已知字段包括"书名","主题词","出版年份","作者"
+     * @param sqlWhereClause where子句，一些已知字段包括"书名","主题词","出版日期","作者"
      * @return
      * @throws IOException
      */
@@ -111,7 +111,7 @@ public class BookSearch {
     /**
      * 通过指定sql查询的where子句进行图书查询,并把查询结果中的图书添加进目录结构
      *
-     * @param sqlWhereClause where子句，一些已知字段包括"书名","主题词","出版年份","作者"
+     * @param sqlWhereClause where子句，一些已知字段包括"书名","主题词","出版日期","作者"
      * @param rootCatalog    根目录
      * @return
      * @throws IOException

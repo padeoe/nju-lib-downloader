@@ -3,8 +3,8 @@
 <h2>使用示例</h2>
 按书本id下载
 ```
-//创建Book对象，id=13544100，即《C# Primer Plus 中文版》一书
-Book book = new Book("13544100");
+//通过在线阅读地址获取Book对象
+Book book = Book.getBookFromUrl("http://114.212.7.104:8181/Jpath_sky/DsrPath.do?code=153BB79FEDBAFB093F90DDD4F90950EA&ssnumber=13488955&netuser=1&jpgreadmulu=1&displaystyle=0&channel=0&ipside=0");
 
 //使用5个线程下载，保存到桌面
 book.download("C:\\Users\\Username\\Desktop\\njulibpdf\\", 5);
