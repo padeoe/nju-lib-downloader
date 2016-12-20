@@ -8,7 +8,7 @@ import org.junit.Test;
 public class BookDownloaderTest {
     @Test
     public void download() throws Exception {
-        new BookDownloader("11595586").downloadPng();
+        new BookDownloader("11595586").downloadAllImages();
     }
 
 }

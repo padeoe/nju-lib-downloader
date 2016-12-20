@@ -1,5 +1,5 @@
-# NJU-lib-pdf-Downloader
-用途？不可描述...
+# NJU-lib-Downloader
+用途？自行脑补，不可描述...
 <h2>使用示例</h2>
 按书本id下载
 ```
@@ -15,13 +15,13 @@ book.download("C:\\Users\\Username\\Desktop\\njulibpdf\\", 5);
 Catalog root = new Catalog("0T0P3010");
 
 //获取分类下所有书
-List<Book> books = root.getAllBooks();
+List<Book> books = root.queryAllBooks();
 
 //下载该分类下所有书籍
 books.forEach(book -> book.download("C:\\Users\\padeoe\\Desktop\\libpdf", 5));
 ```
 
-分类浏览
+浏览分类
 ```
 //获取根分类
 Catalog root = Catalog.getRootCatalog();
@@ -35,6 +35,18 @@ root.getChildren().forEach(
             child.getId() + " " + child.getName() + " " + child.getBooksSize()
             )
         );
+```
+图书查询
+```
+new BookSearch().findAllBySQL("出版日期 = '2016'");//查询所有2016年出版的图书
+
+或者
+
+//查询2016年的书，并将这些书按照分类目录插入到对应目录节点
+RootCatalog root = new RootCatalog();
+Set<Book> books2016 = new BookSearch().findAllBySQL("出版日期 ='2016'", root);
+//在分类目录中查找“工业技术图书馆>自动化技术、计算机技术”分类下的图书,支持中图法分类名和分类代号
+Set<Book> itbooks2016 = root.getChild("工业技术图书馆").getChild("自动化技术、计算机技术").getBooks();
 ```
 
 错误恢复

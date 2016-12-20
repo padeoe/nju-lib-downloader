@@ -9,13 +9,11 @@ import utils.network.MyHttpRequest;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * 图书的分类。是树结构。
@@ -25,7 +23,7 @@ import java.util.regex.Pattern;
  * 或者调用{@link #loadAllChild()}迭代加载所有子节点。
  *
  * @author padeoe
- *         Date: 2016/12/08
+ * @Date: 2016/12/08
  */
 public class Catalog {
     /**
@@ -44,15 +42,9 @@ public class Catalog {
     /**
      * 子分类列表
      */
-    private List<Catalog> children;
-    /**
-     * 是否是子分类。用于区分根节点和普通节点，只有根节点是false
-     */
-    private boolean isLeaf;
-    /**
-     * 是否是末级分类
-     */
-    private boolean allowsChildren;
+    private Map<String, Catalog> children;
+
+
     /**
      * 子分类{@link #children}是否已经被加载
      */
@@ -67,6 +59,13 @@ public class Catalog {
         return cookie;
     }
 
+    /**
+     * 设置{@code cookie},Catalog的子每一次子目录加载，
+     * 书籍查询等操作都需要cookie，设置的cookie将会对所有子目录使用，
+     * 以避免频繁获取cookie
+     *
+     * @param cookie
+     */
     public void setCookie(String cookie) {
         this.cookie = cookie;
     }
@@ -82,18 +81,15 @@ public class Catalog {
         return children.size();
     }
 
+    /**
+     * 获取父目录
+     *
+     * @return
+     */
     public Catalog getParent() {
         return parent;
     }
 
-
-    public boolean getAllowsChildren() {
-        return allowsChildren;
-    }
-
-    public boolean isLeaf() {
-        return isLeaf;
-    }
 
     /**
      * 获取所有子分类，初始为null。
@@ -101,8 +97,12 @@ public class Catalog {
      *
      * @return
      */
-    public List<Catalog> getChildren() {
+    public Map<String, Catalog> getChildren() {
         return children;
+    }
+
+    public Catalog getChild(String idOrName) {
+        return children.get(idOrName);
     }
 
     public String getName() {
@@ -125,29 +125,28 @@ public class Catalog {
         this.parent = parent;
     }
 
-    public void setLeaf(boolean leaf) {
-        isLeaf = leaf;
+    public boolean isTerminal() {
+        return false;
     }
 
-    public boolean isAllowsChildren() {
-        return allowsChildren;
+    /**
+     * 添加一个子目录
+     *
+     * @param catalog 子目录
+     * @return 如果同id的子目录已存在，则返回之前的子目录，如果不存在，则添加并返回null
+     */
+    public Catalog addChild(Catalog catalog) {
+        if (catalog.name != null) {
+            children.putIfAbsent(catalog.name, catalog);
+        }
+        return children.putIfAbsent(catalog.id, catalog);
     }
 
-    public void setAllowsChildren(boolean allowsChildren) {
-        this.allowsChildren = allowsChildren;
-    }
-
-    public void addChild(Catalog catalog) {
-        this.children.add(catalog);
-    }
-
-    private Catalog(String id, String name, Catalog parent, boolean isLeaf, boolean allowsChildren, boolean isLoaded) {
+    public Catalog(String id, String name, Catalog parent, boolean isLoaded) {
         this.id = id;
         this.name = name;
         this.parent = parent;
-        children = new ArrayList<Catalog>();
-        this.isLeaf = isLeaf;
-        this.allowsChildren = allowsChildren;
+        children = new HashMap<>();
         this.isLoaded = isLoaded;
     }
 
@@ -162,23 +161,8 @@ public class Catalog {
         this.id = id;
         this.name = null;
         this.parent = null;
-        children = new ArrayList<>();
-        this.isLeaf = false;
-        this.allowsChildren = true;
+        children = new HashMap<>();
         this.isLoaded = false;
-    }
-
-    /**
-     * 获取根目录。
-     * 如果你没有足够的信息自己调用{@link #Catalog(String)}和
-     * {@link #Catalog(String, String, Catalog, boolean, boolean, boolean)}创建{@code Catalog}对象，
-     * 那么你应该使用该方法查看<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a>服务器
-     * 支持的所有分类
-     *
-     * @return 根目录，子节点尚未被加载
-     */
-    public static Catalog getRootCatalog() {
-        return new Catalog("all", "根目录", null, false, true, false);
     }
 
     /**
@@ -190,23 +174,26 @@ public class Catalog {
      * @throws IOException 从服务器查询子节点出错
      */
     public void loadChild() throws IOException {
-        checkCookie();
-        String Url = Controller.baseUrl + "/classifyview";
-        String data = "fenlei=" + this.getId() + "&lib=markbook";
-        String result = MyHttpRequest.postWithCookie(data, Url, null, cookie, "UTF-8", "UTF-8", 1000);
-        // System.out.println(result);
-        Document doc = Jsoup.parse(result);
-        Elements li = doc.getElementsByTag("li");
-        for (Element catalogId : li) {
-            String id = catalogId.attr("id");
-            String name = catalogId.getElementsByTag("a").text();
-            boolean hasSubTree = catalogId.getElementsByTag("img").attr("onClick").contains("getSubTree");
-            //System.out.println(id+" "+Controller.decodeUrlUnicode(name));
-            Catalog child = new Catalog(id, Controller.decodeUrlUnicode(name), this, true, hasSubTree, false);
-            child.setCookie(cookie);
-            this.addChild(child);
+        if (!isTerminal()) {
+            checkCookie();
+            String Url = Controller.baseUrl + "/classifyview";
+            String data = "fenlei=" + this.getId() + "&lib=markbook";
+            String result = MyHttpRequest.postWithCookie(data, Url, null, cookie, "UTF-8", "UTF-8", 1000);
+            // System.out.println(result);
+            Document doc = Jsoup.parse(result);
+            Elements li = doc.getElementsByTag("li");
+            for (Element catalogId : li) {
+                String id = catalogId.attr("id");
+                String name = catalogId.getElementsByTag("a").text();
+                boolean hasSubTree = catalogId.getElementsByTag("img").attr("onClick").contains("getSubTree");
+                //System.out.println(id+" "+Controller.decodeUrlUnicode(name));
+                Catalog child = hasSubTree ? new Catalog(id, Controller.decodeUrlUnicode(name), this, false) :
+                        new TerminalCatalog(id, Controller.decodeUrlUnicode(name), this, false);
+                child.setCookie(cookie);
+                this.addChild(child);
+            }
+            this.isLoaded = true;
         }
-        this.isLoaded = true;
     }
 
 
@@ -217,9 +204,9 @@ public class Catalog {
      * @throws IOException 从服务器查询时出错
      */
     public void loadAllChild() throws IOException {
-        if (allowsChildren) {
+        if (!isTerminal()) {
             loadChild();
-            for (Catalog child : getChildren()) {
+            for (Catalog child : getChildren().values()) {
                 child.loadAllChild();
             }
         }
@@ -235,9 +222,9 @@ public class Catalog {
      * @throws IOException 连接失败的错误
      */
     public void downloadWithCataDir(String pathname, int threadNumber, String errorLogPath) throws IOException {
-        if (allowsChildren) {
+        if (!isTerminal()) {
             loadChild();
-            for (Catalog child : getChildren()) {
+            for (Catalog child : getChildren().values()) {
                 child.downloadWithCataDir(Paths.get(pathname, name == null ? id : name).toString(), threadNumber, errorLogPath);
             }
         } else {
@@ -249,29 +236,30 @@ public class Catalog {
      * 下载分类下所有图书，会迭代测创建分类文件夹
      * 下载存储路径为当前路径，线程数为5，错误日志将保存在当前路径，文件名为{@link BookDownloader#ERROR_LOG_NAME}
      * 可以调用重载{@link #downloadWithCataDir(String, int, String)}设置参数
+     *
      * @throws IOException 连接失败的错误
      */
     public void downloadWithCataDir() throws IOException {
-        downloadWithCataDir(System.getProperty("user.dir"),5,Paths.get(System.getProperty("user.dir"),BookDownloader.ERROR_LOG_NAME).toString());
+        downloadWithCataDir(System.getProperty("user.dir"), 5, Paths.get(System.getProperty("user.dir"), BookDownloader.ERROR_LOG_NAME).toString());
     }
 
     /**
-     * 获取该分类下图书列表的第{@code page}页。
-     * 图书列表的分页时服务器做的，每页最多10条图书。
+     * 从服务器获取该分类下图书列表的第{@code page}页。
+     * 图书列表的分页是服务器做的，每页最多10条图书。
      * <p>
-     * 页数的最大值可以根据{@link #getBooksSize()}自行计算
+     * 页数的最大值可以根据{@link #queryBooksSize()}自行计算
      *
      * @param page 图书列表的页码
      * @return 列表该页记录的图书
      * @throws IOException 从服务器查询书本列表时出错
      */
-    public Set<Book> getBooks(int page) throws IOException {
+    public Set<Book> queryBooks(int page) throws IOException {
         checkCookie();
         String data = "fenlei=" + this.id + "&mark=all&Page=" + page + "&totalnumber=-1";
         String Url = Controller.baseUrl + "/markbook/classifybookview.jsp";
         String html = MyHttpRequest.postWithCookie(data, Url, null, cookie, "UTF-8", "GBK", 1000);
         //   System.out.println(html);
-        Set<Book> books = getBooks(html);
+        Set<Book> books = queryBooks(html);
         return books;
 
     }
@@ -282,8 +270,8 @@ public class Catalog {
      * @return 分类下所有图书
      * @throws IOException 从服务器查询书本列表时出错
      */
-    public Set<Book> getAllBooks() throws IOException {
-        return getAllBooks(5);
+    public Set<Book> queryAllBooks() throws IOException {
+        return queryAllBooks(5);
     }
 
     /**
@@ -293,7 +281,7 @@ public class Catalog {
      * @return 图书集合
      * @throws IOException 连接错误
      */
-    public Set<Book> getAllBooks(int threadNumber) throws IOException {
+    public Set<Book> queryAllBooks(int threadNumber) throws IOException {
         checkCookie();
         String data = "fenlei=" + this.id + "&mark=all&Page=1&totalnumber=-1";
         String Url = Controller.baseUrl + "/markbook/classifybookview.jsp";
@@ -307,7 +295,7 @@ public class Catalog {
             String booksize = keyword.substring(keyword.lastIndexOf(",") + 1, keyword.length() - 1);
             int size = Integer.parseInt(booksize);
             System.out.println("一共 " + size + " 本书");
-            Set<Book> books = getBooks(html);
+            Set<Book> books = queryBooks(html);
             List<PageGetThread> threadList = new ArrayList<>();
 
             AtomicInteger needGettedPage = new AtomicInteger(2);//需要获取的页码
@@ -355,13 +343,13 @@ public class Catalog {
             String booksize = keyword.substring(keyword.lastIndexOf(",") + 1, keyword.length() - 1);
             int size = Integer.parseInt(booksize);
             System.out.println("一共 " + size + " 本书");
-            Set<Book> books = getBooks(html);
+            Set<Book> books = queryBooks(html);
             Set<Book> downloading;
             downloadBooks(books, pathname, threadNumber, errorLogPath);
             int lastPage = size / 10 + 1;//最后一页的页码
             int index = 1;
             for (int i = lastPage; i >= 2; i--) {
-                downloading = getBooks(i);
+                downloading = queryBooks(i);
                 for (Book book : downloading) {
                     if (books.add(book)) {
                         book.download(pathname, threadNumber, errorLogPath);
@@ -401,11 +389,10 @@ public class Catalog {
                 int gettingpage = needGettedPage.getAndIncrement();
                 if (gettingpage <= lastPage) {
                     try {
-                        //  System.out.println("页数"+gettingpage);
                         if (gettingpage % 10 == 0) {
                             resetCookie();
                         }
-                        books.addAll(getBooks(gettingpage));
+                        books.addAll(queryBooks(gettingpage));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -421,19 +408,60 @@ public class Catalog {
     }
 
 
-    private Set<Book> getBooks(String html) {
+    /**
+     * 获取HTML文本中的书籍并根据其目录添加进当前的目录结构
+     *
+     * @param html
+     * @return
+     */
+    public Set<Book> queryBooks(String html) {
         Document doc = Jsoup.parse(html);
-        Elements elements = doc.select("li[style]");
+        Elements booksliNode = doc.select("li[style]");
+        return queryBooks(booksliNode);
+    }
+
+    private Set<Book> queryBooks(Elements booksliNode) {
         Set<Book> books = new HashSet<>();
-        for (Element element : elements) {
+        for (Element element : booksliNode) {
+            //获取书名和id
             String name = null, id = null, author = null, publishDate = null, theme = null, detailCatalog = null;
-            Elements nameNode = element.select("a[href=##]");
-            if (!nameNode.isEmpty()) {
-                String onclick = nameNode.get(0).attr("onclick");
-                id = onclick.substring(onclick.indexOf("(") + 1, onclick.lastIndexOf(","));
+            Catalog bookCatalog;
+            Elements nameIdNode = element.select("p[class=name]");
+            if (nameIdNode != null) {
+                name = nameIdNode.text();
+                Elements idNode = nameIdNode.select("a[onclick]");
+                if (idNode != null && idNode.size() > 0) {
+                    String idOnClick = idNode.get(0).attr("onclick");
+                    int start = idOnClick.indexOf("(") + 1, end = idOnClick.lastIndexOf(",");
+                    if (start != 0 && end != -1) {
+                        id = idOnClick.substring(start, end);
+                    }
+                }
             }
+            //获取目录
+            Catalog[] catalogs = new Catalog[0];
+            Elements infoNode = element.select("p[class=info]");
+            if (infoNode != null) {
+                Elements bookInfos = infoNode.select("a");
+                if (bookInfos != null && bookInfos.size() > 0) {
+                    Element terminalCataNode = bookInfos.last();
+                    bookInfos.remove(terminalCataNode);
+                    List<Catalog> tmplist = bookInfos.stream()
+                            .map(bookInfo -> getBookCata(bookInfo, false))
+                            .filter(bookInfo -> bookInfo != null)
+                            .collect(Collectors.toList());
+                    Catalog terminalCatalog = getBookCata(terminalCataNode, true);
+                    if (terminalCatalog != null) {
+                        tmplist.add(terminalCatalog);
+                    }
+                    catalogs = tmplist.toArray(catalogs);
+                }
+            }
+            bookCatalog = this.link(catalogs);
+
+            //获取作者，出版日期，主题词，分类
             String info = element.text();
-            Pattern pattern = Pattern.compile("\\d+\\. (.*) 作者：(.*) 出版日期：(\\d+).*?(?:主题词：(.+))? 分类:(.*)");
+            Pattern pattern = Pattern.compile("\\d+\\. (.*) 作者[:：](.*) 出版日期[:：](\\d+).*?(?:主题词[:：](.+))? 分类[:：](.*)");
             Matcher matcher = pattern.matcher(info);
             while (matcher.find()) {
                 name = matcher.group(1);
@@ -447,10 +475,17 @@ public class Catalog {
             while (minMatcher.find()) {
                 name = minMatcher.group(1);
             }
+
+            //汇总书本
             if (name != null && id != null) {
-                Book book = new Book(id, name, author, publishDate, theme, this, detailCatalog);
+                Book book = new Book(id, name, author, publishDate, theme, bookCatalog, detailCatalog);
                 book.setCookie(cookie);
                 books.add(book);
+                if (bookCatalog.isTerminal()) {
+                    ((TerminalCatalog) bookCatalog).addBook(book);
+                } else {
+                    System.out.println("未获取到目录信息，将不被归档 " + book);
+                }
             } else {
                 System.out.println("error: " + info);
             }
@@ -460,12 +495,39 @@ public class Catalog {
 
 
     /**
-     * 查询当前分类下图书的数量。包含所有子分类下的图书
+     * 通过HTML中对应节点获取到书所在目录
+     *
+     * @param bookInfo   书本信息的HTML节点
+     * @param isTerminal 是否是终端节点
+     * @return
+     */
+    private Catalog getBookCata(Element bookInfo, boolean isTerminal) {
+        if (bookInfo == null) {
+            System.out.println("e");
+        }
+        String cataName = bookInfo.text();
+        String href = bookInfo.attr("href");
+        if (href != null) {
+            int cataIdStart = href.indexOf('=') + 1;
+            if (cataIdStart != 0) {
+                String cataId = href.substring(href.indexOf('=') + 1, href.length());
+                Catalog tmp = isTerminal ? new TerminalCatalog(cataId) : new Catalog(cataId);
+                tmp.setName(cataName);
+                return tmp;
+            }
+
+        }
+        return null;
+    }
+
+
+    /**
+     * 从服务器查询当前分类下图书的数量。包含所有子分类下的图书
      *
      * @return 当前分类下图书的数量
      * @throws IOException
      */
-    public int getBooksSize() throws IOException {
+    public int queryBooksSize() throws IOException {
         checkCookie();
         String data = "fenlei=" + this.getId() + "&mark=all&Page=1&totalnumber=-1";
         String Url = Controller.baseUrl + "/markbook/classifybookview.jsp";
@@ -481,14 +543,103 @@ public class Catalog {
     }
 
 
+    /**
+     * 检查{@code cookie}如果为null将会更新cookie
+     *
+     * @throws IOException
+     */
     private void checkCookie() throws IOException {
         cookie = (cookie == null) ? Controller.getSession() : cookie;
     }
 
+    /**
+     * 重置{@code cookie}
+     *
+     * @throws IOException
+     */
     private void resetCookie() throws IOException {
         cookie = Controller.getSession();
         System.out.println(cookie);
     }
 
+    /**
+     * 对当前目录添加子目录
+     *
+     * @param childCatalogs 顺次路径关系子目录，后一个是前一个的子目录。第一个是当前目录的子目录
+     * @return 子目录的最后一级目录.若子路径参数为空，则为当前目录
+     */
+    public Catalog link(Catalog... childCatalogs) {
+        Catalog currentCatalog = this;
+        for (Catalog catalog : childCatalogs) {
+            Catalog previois = currentCatalog.addChild(catalog);
+            if (previois != null) {
+                currentCatalog = previois;
+            } else {
+                catalog.parent = currentCatalog;
+                currentCatalog = catalog;
+            }
+        }
+        return currentCatalog;
+    }
 
+    /**
+     * 获取目录对象所有终端目录下已存储的书籍
+     *
+     * @return
+     */
+    public Set<Book> getBooks() {
+        return this.getChildren().values().stream().map(catalog -> catalog.getBooks()).collect(HashSet::new, Set::addAll, Set::addAll);
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Catalog))
+            return false;
+        if (obj == this)
+            return true;
+        return this.id.equals(((Catalog) obj).id);
+    }
+
+    /**
+     * 获取目录所在的路径，返回可读的{@code String}，从根目录到当前目录顺次所经路径。
+     *
+     * @return 从根目录到当前目录顺次所经路径，用">"分隔目录
+     */
+    public String getPath() {
+        Stack<Catalog> parents = new Stack<>();
+        Catalog catalog = this;
+        while (catalog != null) {
+            parents.push(catalog);
+            catalog = catalog.getParent();
+        }
+        StringBuilder sb = new StringBuilder();
+        if (!parents.isEmpty()) {
+            sb.append(parents.pop().toString());
+        }
+        while (!parents.isEmpty()) {
+            sb.append(">");
+            sb.append(parents.pop().toString());
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 用于判断{@link Catalog}对象是不是{@link RootCatalog}的实例
+     *
+     * @return 是否是根目录
+     */
+    public boolean isRoot() {
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return this.getId() + (this.getName() == null ? "" : this.getName() + " ");
+    }
 }

@@ -1,4 +1,4 @@
-package spider;
+package fix;
 
 import object.BookDownloader;
 
@@ -55,7 +55,7 @@ public class MissingPageCompletion {
                     location = matcher.group(2);
                     System.out.println(url + " " + location);
                     try {
-                        BookDownloader.download(url, location);
+                        BookDownloader.downloadImage(url, location);
                         iterator.remove();
                     } catch (IOException downloadFail) {
                         ;

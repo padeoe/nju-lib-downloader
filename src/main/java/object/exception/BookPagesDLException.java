@@ -1,4 +1,4 @@
-package object;
+package object.exception;
 
 import java.util.Vector;
 

@@ -10,11 +10,11 @@ import static org.junit.Assert.assertTrue;
 public class CatalogTest {
     @Test
     public void getBooksSize() throws Exception {
-        Catalog root = Catalog.getRootCatalog();
+        Catalog root = new RootCatalog();
         root.loadChild();
         int sum = 0;
-        for (Catalog child : root.getChildren()) {
-            sum += child.getBooksSize();
+        for (Catalog child : root.getChildren().values()) {
+            sum += child.queryBooksSize();
         }
         assertTrue(sum >= 60465);
     }

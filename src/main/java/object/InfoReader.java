@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  * 该类会读取info文件并解析出{@link Book}对象
  *
  * @author padeoe
- *         Date: 2016/12/11
+ * @Date: 2016/12/11
  */
 public class InfoReader {
     String infoFilePath;

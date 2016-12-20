@@ -1,4 +1,6 @@
-package object;
+package object.exception;
+
+import object.Book;
 
 /**
  * 下载某一本书时发生错误。此异常发生在该书对应的文件夹创建之前。因此此书没有任何文件被下载。

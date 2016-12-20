@@ -10,7 +10,7 @@ import java.net.URLDecoder;
  * 图书
  *
  * @author padeoe
- *         Date: 2016/12/08
+ * @Date: 2016/12/08
  */
 public class Book {
     /**
@@ -146,7 +146,7 @@ public class Book {
         this.cookie = cookie;
     }
 
-    private String cookie;
+    public static String cookie;
 
     /**
      * 初始化一个新创建的{@code Book}对象。需要{@code Book}的所有属性。
@@ -204,11 +204,10 @@ public class Book {
      * 下载该书。将下载许多图片，书的每一页都是一张png图片。
      * 将会在{@code pathname}下创建一个以书名命名的文件夹，并存储所有图片。
      * 错误日志将在当前路径下名为"error.log"
-     *
      */
     public void download() {
         BookDownloader bookDownloader = new BookDownloader(this);
-        bookDownloader.downloadPng();
+        bookDownloader.downloadAllImages();
     }
 
     /**
@@ -223,7 +222,7 @@ public class Book {
         BookDownloader bookDownloader = new BookDownloader(this);
         bookDownloader.setSavePath(pathname);
         bookDownloader.setThreadNumber(threadNumber);
-        bookDownloader.downloadPng();
+        bookDownloader.downloadAllImages();
     }
 
     /**
@@ -239,7 +238,7 @@ public class Book {
         bookDownloader.setSavePath(pathname);
         bookDownloader.setThreadNumber(threadNumber);
         bookDownloader.setErrorLogPath(errorLogPath);
-        bookDownloader.downloadPng();
+        bookDownloader.downloadAllImages();
     }
 
     @Override
