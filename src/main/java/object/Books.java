@@ -27,9 +27,9 @@ public class Books {
     }
 
     /**
-     * 查询到的图书总数
+     * 获取查询到的图书总数
      *
-     * @return
+     * @return 查询到的图书总数
      */
     public int getTotalNums() {
         return totalNums;

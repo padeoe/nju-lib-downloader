@@ -5,14 +5,17 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import spider.Controller;
+import spider.BookDownloader;
+import spider.NJULib;
 import utils.network.MyHttpRequest;
 
 import java.io.IOException;
 import java.net.URLDecoder;
 
 /**
- * 图书
+ * 图书。
+ *
+ * 对应<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a> 中的图书。
  *
  * @author padeoe
  * @Date: 2016/12/08
@@ -29,7 +32,10 @@ public class Book {
     private String author;
 
     /**
-     * 初始化一个新创建的{@code Book}对象
+     * 初始化一个新创建的{@code Book}对象。
+     * <p>
+     * 如果你没有足够的参数信息调用该方法创建对象,可调用{@link #getBookFromUrl(String)}通过书本的在线阅读地址获取实例，
+     * 或者使用{@link spider.BookSearch}中的方法根据书名等字段查询并创建满足条件的的图书实例。
      *
      * @param id 书本id，需要和<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a>服务器一致
      */
@@ -38,14 +44,19 @@ public class Book {
     }
 
     /**
-     * 获取书本的id
+     * 获取书本的编号
      *
-     * @return
+     * @return 书本编号
      */
     public String getId() {
         return id;
     }
 
+    /**
+     * 设置书本编号
+     *
+     * @param id 书本编号
+     */
     public void setId(String id) {
         this.id = id;
     }
@@ -59,6 +70,11 @@ public class Book {
         return name;
     }
 
+    /**
+     * 设置书名
+     *
+     * @param name 书名
+     */
     public void setName(String name) {
         this.name = name;
     }
@@ -66,12 +82,17 @@ public class Book {
     /**
      * 获取书本作者，可能是null
      *
-     * @return
+     * @return 书本作者
      */
     public String getAuthor() {
         return author;
     }
 
+    /**
+     * 设置书本作者
+     *
+     * @param author 书本作者
+     */
     public void setAuthor(String author) {
         this.author = author;
     }
@@ -79,7 +100,7 @@ public class Book {
     /**
      * 获取书本出版日期
      *
-     * @return
+     * @return 书本出版日期
      */
     public String getPublishDate() {
         return publishDate;
@@ -92,7 +113,7 @@ public class Book {
     /**
      * 获取书本主题词，可能是null
      *
-     * @return
+     * @return 书本主题词
      */
     public String getTheme() {
         return theme;
@@ -107,26 +128,26 @@ public class Book {
      *
      * @return 书本所在分类
      */
-    public Catalog getCatalog() {
-        return catalog;
+    public BookClass getBookClass() {
+        return bookClass;
     }
 
-    public void setCatalog(Catalog catalog) {
-        this.catalog = catalog;
+    public void setBookClass(BookClass bookClass) {
+        this.bookClass = bookClass;
     }
 
     /**
      * 获取书本所在末级分类
      *
-     * @return 字符串描述所属分类，最末层的分类，用“>”分割层级，
-     * 例如“数理科学和化学图书馆>数学>总论复分>总论”
+     * @return 字符串描述所属分类，最末层的分类，用&gt;分割层级，
+     * 例如“数理科学和化学图书馆&gt;数学&gt;总论复分&gt;总论”
      */
-    public String getDetailCatalog() {
-        return detailCatalog;
+    public String getDetailBookClass() {
+        return detailBookClass;
     }
 
-    public void setDetailCatalog(String detailCatalog) {
-        this.detailCatalog = detailCatalog;
+    public void setDetailBookClass(String detailBookClass) {
+        this.detailBookClass = detailBookClass;
     }
 
     private String publishDate;
@@ -134,12 +155,13 @@ public class Book {
     /**
      * 所属分类
      */
-    Catalog catalog = new Catalog("all");
+    private BookClass bookClass = new BookClass("all");
     /**
-     * 所属分类，最末层的分类，字符串描述，“>”分割层级，
+     * 所属分类的中文描述。
+     * “>”分割层级，
      * 例如“数理科学和化学图书馆>数学>总论复分>总论”
      */
-    private String detailCatalog;
+    private String detailBookClass;
 
     public String getCookie() {
         return cookie;
@@ -153,24 +175,25 @@ public class Book {
 
     /**
      * 初始化一个新创建的{@code Book}对象。需要{@code Book}的所有属性。
-     * 如果你没有足够的参数信息调用该方法创建对象。请调用{@link #Book(String)}
+     * 如果你没有足够的参数信息调用该方法创建对象,可调用{@link #getBookFromUrl(String)}通过书本的在线阅读地址获取实例，
+     * 或者使用{@link spider.BookSearch}中的方法根据书名等字段查询并创建满足条件的的图书实例。
      *
-     * @param id            {@code Book}的id。该id是服务器
-     * @param name
-     * @param author
-     * @param publishDate
-     * @param theme
-     * @param catalog
-     * @param detailCatalog
+     * @param id              {@code Book}的id。该id是服务器命名的
+     * @param name            书名
+     * @param author          作者
+     * @param publishDate     出版日期
+     * @param theme           主题词
+     * @param bookClass       书本分类
+     * @param detailBookClass 书本分类分类名路径
      */
-    public Book(String id, String name, String author, String publishDate, String theme, Catalog catalog, String detailCatalog) {
+    public Book(String id, String name, String author, String publishDate, String theme, BookClass bookClass, String detailBookClass) {
         this.id = id;
         this.name = name;
         this.author = author;
         this.publishDate = publishDate;
         this.theme = theme;
-        this.catalog = catalog;
-        this.detailCatalog = detailCatalog;
+        this.bookClass = bookClass;
+        this.detailBookClass = detailBookClass;
     }
 
 
@@ -183,7 +206,7 @@ public class Book {
     public static Book getBookFromUrl(String onlineReadUrl) {
         for (String para : onlineReadUrl.split("&")) {
             if (para.startsWith("ssnumber=")) {
-                Book book= new Book(para.substring(9, para.length()));
+                Book book = new Book(para.substring(9, para.length()));
                 book.fillBookInfoByUrl(onlineReadUrl);
                 return book;
             }
@@ -191,25 +214,27 @@ public class Book {
         return null;
     }
 
-    public static void main(String[] args) {
-       Book book= Book.getBookFromUrl("http://114.212.7.104:8181/Jpath_sky/DsrPath.do?code=153BB79FEDBAFB093F90DDD4F90950EA&ssnumber=13488955&netuser=1&jpgreadmulu=1&displaystyle=0&channel=0&ipside=0");
-    }
-
-    public void fillBookInfoByUrl(String url){
+    /**
+     * 通过在线阅读页面补全{@code Book}的信息
+     * 仅可补全{@link #name},{@link #id},{@link #author},{@link  #publishDate}
+     *
+     * @param url 书本的在线阅读页面
+     */
+    public void fillBookInfoByUrl(String url) {
         try {
-            String html=new BookDownloader(this).getBookViewPageHtml(url);
-            html=html.replaceAll("<!--","<");
-            html=html.replaceAll("-->","");
+            String html = new BookDownloader(this).getBookViewPageHtml(url);
+            html = html.replaceAll("<!--", "<");
+            html = html.replaceAll("-->", "");
             Document doc = Jsoup.parse(html);
-            Elements nameNode=doc.getElementsByTag("title");
-            this.name=nameNode.text();
-            Elements infoNode=doc.getElementsByTag("span").not("[style]");
-            for(Element node:infoNode){
-                if(node.text().startsWith("作者：")){
-                    this.author=node.text().substring(3,node.text().length());
+            Elements nameNode = doc.getElementsByTag("title");
+            this.name = nameNode.text();
+            Elements infoNode = doc.getElementsByTag("span").not("[style]");
+            for (Element node : infoNode) {
+                if (node.text().startsWith("作者：")) {
+                    this.author = node.text().substring(3, node.text().length());
                 }
-                if(node.text().startsWith("出版日期：")){
-                    this.publishDate=node.text().substring(5,node.text().length());
+                if (node.text().startsWith("出版日期：")) {
+                    this.publishDate = node.text().substring(5, node.text().length());
                 }
             }
         } catch (BookDLException e) {
@@ -218,21 +243,26 @@ public class Book {
     }
 
     /**
-     * 获取书本pdf的浏览地址。方法名和取自服务器js。
+     * 获取书本的在线阅读地址。
      *
-     * @return 书本pdf在线观看的URL
+     * @return 书本在线与阅读的URL
      * @throws IOException IO错误
      */
     public String getbookread() throws IOException {
         resetCookie();
         String para = "BID=" + id + "&ReadMode=0&pdfread=0&displaystyle=0";
-        String Url = Controller.baseUrl + "/getbookread?" + para;
+        String Url = NJULib.baseUrl + "/getbookread?" + para;
         String result = MyHttpRequest.getWithCookie(Url, null, cookie, "UTF-8", 1000);
-        return Controller.baseUrl + URLDecoder.decode(result);
+        return NJULib.baseUrl + URLDecoder.decode(result, "UTF-8");
     }
 
+    /**
+     * 重置{@link #cookie}
+     *
+     * @throws IOException 重置cookie失败
+     */
     private void resetCookie() throws IOException {
-        cookie = (cookie == null) ? Controller.getSession() : cookie;
+        cookie = (cookie == null) ? NJULib.getSession() : cookie;
     }
 
     @Override
@@ -243,10 +273,11 @@ public class Book {
                 ", author='" + author + '\'' +
                 ", publishDate='" + publishDate + '\'' +
                 ", theme='" + theme + '\'' +
-                ", catalog=" + catalog.getId() +
-                ", detailCatalog='" + detailCatalog + '\'' +
+                ", bookClass='" + bookClass.getPath() + '\'' +
+                ", detailBookClass='" + detailBookClass + '\'' +
                 '}';
     }
+
     /**
      * 下载该书。将下载许多图片，书的每一页都是一张png图片。
      * 将会在{@code pathname}下创建一个以书名命名的文件夹，并存储所有图片。

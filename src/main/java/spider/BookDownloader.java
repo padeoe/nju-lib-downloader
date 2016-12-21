@@ -1,6 +1,8 @@
-package object;
+package spider;
 
 import fix.MissingPageCompletion;
+import object.Book;
+import object.InfoReader;
 import object.exception.BookDLException;
 import object.exception.BookPagesDLException;
 import object.exception.PageDLException;
@@ -19,15 +21,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 书本的下载器，分离了下载相关的函数及变量
+ * 书本的下载器，分离了下载相关的函数及变量。
  *
  * @author padeoe
- * @Date: 2016/12/09
+ *         Date: 2016/12/09
  */
 public class BookDownloader {
     private String errorLogPath = ERROR_LOG_NAME;
     private int threadNumber = 5;
 
+    /**
+     * 获取下载器对应的{@code Book}
+     *
+     * @return 下载器对应的{@code Book}
+     */
     public Book getBook() {
         return book;
     }
@@ -45,6 +52,7 @@ public class BookDownloader {
      * 获取{@code Book}的页组成结构。
      *
      * @return 记录了每种{@link PageType}的数量。
+     * @throws BookDLException 页组成获取失败，书本下载放弃
      */
     public Map<PageType, Integer> getPageNumberMap() throws BookDLException {
         if (pageNumberMap == null) {
@@ -57,7 +65,8 @@ public class BookDownloader {
     /**
      * 获取{@code Book}图片的URL前缀
      *
-     * @return
+     * @return {@code Book}图片的URL前缀
+     * @throws BookDLException 前缀获取失败，书本下载被放弃。
      */
     public String getUrlPrefix() throws BookDLException {
         if (urlPrefix == null) {
@@ -79,7 +88,7 @@ public class BookDownloader {
     /**
      * 创建指定{@code book}的下载器
      *
-     * @param book
+     * @param book 指定的书本
      */
     public BookDownloader(Book book) {
         this.book = book;
@@ -97,7 +106,7 @@ public class BookDownloader {
     /**
      * 查看下载线程数
      *
-     * @return
+     * @return 当前指定的下载线程数。默认为5
      */
     public int getThreadNumber() {
         return threadNumber;
@@ -127,7 +136,7 @@ public class BookDownloader {
      *
      * @param savePath 下载保存路径
      */
-    void setSavePath(String savePath) {
+    public void setSavePath(String savePath) {
         this.savePath = savePath;
     }
 
@@ -188,7 +197,7 @@ public class BookDownloader {
     }
 
     private void getBookPara(String url) throws BookDLException {
-        String html=getBookViewPageHtml(url);
+        String html = getBookViewPageHtml(url);
         Document doc = Jsoup.parse(html);
         Element infoNode = doc.getElementsByTag("script").last();
         pageNumberMap = new HashMap<>();
@@ -264,7 +273,7 @@ public class BookDownloader {
     /**
      * 书本参数已经从服务器获取完毕，直接进行下载并保存。
      *
-     * @throws BookPagesDLException
+     * @throws BookPagesDLException 书本的某些页下载失败
      */
     private void downloadFromParaSetDone() throws BookPagesDLException {
         Vector<PageDLException> pageDLExceptions = new Vector<>();
@@ -355,7 +364,6 @@ public class BookDownloader {
             logBookFail(errorLogPath);//错误日志，记录未下载书籍
         } catch (BookPagesDLException e) {
             logPageFail(e, errorLogPath);//错误日志，记录单页下载失败
-            e.getPageDLExceptions().forEach(pageDLException -> System.out.println(pageDLException));
         }
     }
 
@@ -378,7 +386,7 @@ public class BookDownloader {
      * 下载{@code PageType.CONTENT}部分所有的页，即正文部分。
      * 不直接调用{@link #download(PageType)}下载正文部分是因为其采用了单线程下载。正文部分书页较多，因此本方法会使用多线程下载。
      *
-     * @throws BookPagesDLException
+     * @throws BookPagesDLException 书本的某些页下载失败
      */
     private void downloadContent() throws BookPagesDLException {
         int firstPage = getFirstPage(PageType.CONTENT);//第一页的序号
@@ -498,7 +506,7 @@ public class BookDownloader {
      * @param bookPagesDLException 单页失败异常
      * @param pageFailLogPath      日志路径
      */
-    private void logPageFail(BookPagesDLException bookPagesDLException, String pageFailLogPath) {
+    private static void logPageFail(BookPagesDLException bookPagesDLException, String pageFailLogPath) {
         Vector<PageDLException> pageDLExceptions = bookPagesDLException.getPageDLExceptions();
         for (PageDLException pageDLException : pageDLExceptions) {
             writeFile(pageFailLogPath, pageDLException.toString());
@@ -515,7 +523,7 @@ public class BookDownloader {
         writeFile(bookFailLogPath, book.toString());
     }
 
-    private void writeFile(String filepath, String content) {
+    public static void writeFile(String filepath, String content) {
         try {
             FileWriter writer = new FileWriter(filepath, true);
             writer.write(content);

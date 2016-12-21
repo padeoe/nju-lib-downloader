@@ -1,5 +1,7 @@
 # NJU-lib-Downloader
-用途？自行脑补，不可描述...
+南大校内某电子书网站的图书爬虫。
+<h2>文档</h2>
+[JavaDoc](https://padeoe.github.io/nju-lib-downloader/)
 <h2>使用示例</h2>
 按在线阅读地址下载
 ```
@@ -12,10 +14,10 @@ book.download("C:\\Users\\Username\\Desktop\\njulibpdf\\", 5);
 按分类批量下载
 ```
 //中图法分类 计算机软件类
-Catalog root = new Catalog("0T0P3010");
+BookClass itClass = new BookClass("0T0P3010");
 
 //获取分类下所有书
-List<Book> books = root.queryAllBooks();
+Set <Book> books = itClass.queryAllBooks();
 
 //下载该分类下所有书籍
 books.forEach(book -> book.download("C:\\Users\\padeoe\\Desktop\\libpdf", 5));
@@ -24,7 +26,7 @@ books.forEach(book -> book.download("C:\\Users\\padeoe\\Desktop\\libpdf", 5));
 浏览分类
 ```
 //获取根分类
-RootCatalog root = new RootCatalog();
+RootBookClass root = new RootBookClass();
 
 //加载二级分类
 root.loadChild();
@@ -43,8 +45,8 @@ Set<Book> books2016 = new BookSearch().findAllBySQL("出版日期 = '2016'");
 
 或者
 
-//创建空的根目录
-RootCatalog root = new RootCatalog();
+//创建空的根分类
+RootBookClass root = new RootBookClass();
 //查询的同时建立root的子节点
 new BookSearch().findAllBySQL("出版日期 ='2016'", root);
 //在建立好的root中查找“工业技术图书馆>自动化技术、计算机技术”分类下的图书,支持中图法分类名和分类代号

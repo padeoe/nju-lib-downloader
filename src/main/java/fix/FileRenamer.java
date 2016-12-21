@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 /**
  * 重命名之前版本程序下载的文件。
- * 之前版本命名不合理。
+ * 之前版本造成了下载的文件命名不合理。
  *
  * @author padeoe
  * @Date: 2016/12/13
@@ -23,7 +23,7 @@ public class FileRenamer {
         File rootDir = root.toFile();
         if (rootDir.isDirectory()) {
             File dirs[] = rootDir.listFiles();
-            Arrays.asList(dirs).parallelStream().forEach(dir -> handleEndDir(dir));
+            Arrays.asList(dirs).parallelStream().forEach(FileRenamer::handleEndDir);
         } else {
             System.out.println("根目录不是目录，终止");
         }
@@ -57,7 +57,7 @@ public class FileRenamer {
         File rootDir = root.toFile();
         if (rootDir.isDirectory()) {
             File dirs[] = rootDir.listFiles();
-            Arrays.asList(dirs).parallelStream().forEach(dir -> imageEndDir(dir));
+            Arrays.asList(dirs).parallelStream().forEach(FileRenamer::imageEndDir);
         } else {
             System.out.println("根目录不是目录，终止");
         }
@@ -88,7 +88,7 @@ public class FileRenamer {
 
 
     public static String getImageSuffix(File image) {
-        FileInputStream fileInputStream = null;
+        FileInputStream fileInputStream;
         InputStream inputStream;
         try {
             fileInputStream = new FileInputStream(image);
@@ -102,8 +102,6 @@ public class FileRenamer {
                 inputStream.close();
                 return "png";
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }

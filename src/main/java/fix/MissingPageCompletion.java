@@ -1,6 +1,6 @@
 package fix;
 
-import object.BookDownloader;
+import spider.BookDownloader;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,30 +12,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 缺页补全
+ * 读取下载日志中的错误，进行缺页补全。
  *
  * @author padeoe
  *         Date: 2016/12/09
  */
 public class MissingPageCompletion {
-    private String logLocation;
+    private String logLocation = Paths.get(System.getProperty("user.dir"), BookDownloader.ERROR_LOG_NAME).toString();
     private Pattern pattern = Pattern.compile("PageDLException\\{url='(.*)', location='(.*)'\\}");
 
     /**
      * 创建一个{@code MissingPageCompletion}对象并将日志路径指定为{@code logLocation}
      *
-     * @param logLocation
+     * @param logLocation 日志文件路径
      */
     public MissingPageCompletion(String logLocation) {
         this.logLocation = logLocation;
-    }
-
-    /**
-     * 创建一个{@code MissingPageCompletion}对象，
-     * 将读取默认的错误日志路径，默认路径是当前路径下"error.log"
-     */
-    public MissingPageCompletion() {
-        logLocation = Paths.get(System.getProperty("user.dir"), BookDownloader.ERROR_LOG_NAME).toString();
     }
 
     /**
@@ -58,7 +50,6 @@ public class MissingPageCompletion {
                         BookDownloader.downloadImage(url, location);
                         iterator.remove();
                     } catch (IOException downloadFail) {
-                        ;
                     }
                 }
             }
@@ -73,14 +64,30 @@ public class MissingPageCompletion {
         }
     }
 
+    /**
+     * 获取当前指定的日志的位置。
+     * 如果没有指定位置，将默认使用当前路径下的名为{@link BookDownloader#ERROR_LOG_NAME}的文件
+     *
+     * @return 当前指定的日志的位置
+     */
     public String getLogLocation() {
         return logLocation;
     }
 
+    /**
+     * 指定输入的日志的位置
+     *
+     * @param logLocation 作为输入的日志的位置
+     */
     public void setLogLocation(String logLocation) {
         this.logLocation = logLocation;
     }
 
+    /**
+     * 获取当前指定的错误日志的单行格式
+     *
+     * @return 错误日志的单行格式
+     */
     public Pattern getPattern() {
         return pattern;
     }
@@ -88,7 +95,7 @@ public class MissingPageCompletion {
     /**
      * 设置日志的单行格式
      *
-     * @param pattern
+     * @param pattern 日志的单行格式
      */
     public void setPattern(Pattern pattern) {
         this.pattern = pattern;

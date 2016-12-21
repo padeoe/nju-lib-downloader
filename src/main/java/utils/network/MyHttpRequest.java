@@ -42,6 +42,7 @@ public class MyHttpRequest {
      * @param inputEncoding   请求编码
      * @param timeout         超时时间
      * @return 字符串数组，第一个元素是响应数据,若长度为2则第二个是返回的cookie
+     * @throws IOException 网络错误
      */
     public static ReturnData action_returnbyte(String action, String data, String URL, Map<String, String> requestProperty, String cookie, String inputEncoding, int timeout) throws IOException {
         byte[] dataAsBytes = new byte[]{};
@@ -133,6 +134,7 @@ public class MyHttpRequest {
      * @param outputEncoding  响应编码
      * @param timeout         超时时间
      * @return 字符串数组，第一个元素是响应数据,第二个是返回的cookie
+     * @throws IOException 网络错误
      */
     public static String[] postAndGetCookie(String postData, String URL, Map<String, String> requestProperty, String inputEncoding, String outputEncoding, int timeout) throws IOException {
         return action("POST", postData, URL, requestProperty, null, inputEncoding, outputEncoding, timeout);
@@ -149,6 +151,7 @@ public class MyHttpRequest {
      * @param outputEncoding  响应编码
      * @param timeout         超时时间
      * @return 响应数据
+     * @throws IOException 网络错误
      */
     public static String postWithCookie(String postData, String URL, Map<String, String> requestProperty, String cookie, String inputEncoding, String outputEncoding, int timeout) throws IOException {
         return action("POST", postData, URL, requestProperty, cookie, inputEncoding, outputEncoding, timeout)[0];
@@ -164,6 +167,7 @@ public class MyHttpRequest {
      * @param outputEncoding  响应编码
      * @param timeout         超时时间
      * @return 响应数据
+     * @throws IOException 网络错误
      */
     public static String post(String postData, String URL, Map<String, String> requestProperty, String inputEncoding, String outputEncoding, int timeout) throws IOException {
         return action("POST", postData, URL, requestProperty, null, inputEncoding, outputEncoding, timeout)[0];
@@ -178,6 +182,7 @@ public class MyHttpRequest {
      * @param outputEncoding  响应编码
      * @param timeout         超时时间
      * @return 字符串数组，第一个元素是响应数据,第二个是返回的cookie
+     * @throws IOException 网络错误
      */
     public static String[] getAndGetCookie(String URL, Map<String, String> requestProperty, String outputEncoding, int timeout) throws IOException {
         return action("GET", null, URL, requestProperty, null, "null", outputEncoding, timeout);
@@ -192,6 +197,7 @@ public class MyHttpRequest {
      * @param outputEncoding  响应编码
      * @param timeout         超时时间
      * @return 响应数据
+     * @throws IOException 网络错误
      */
     public static String getWithCookie(String URL, Map<String, String> requestProperty, String cookie, String outputEncoding, int timeout) throws IOException {
         return action("GET", null, URL, requestProperty, cookie, null, outputEncoding, timeout)[0];
@@ -205,6 +211,7 @@ public class MyHttpRequest {
      * @param outputEncoding  响应编码
      * @param timeout         超时时间
      * @return 响应数据
+     * @throws IOException 网络错误
      */
     public static String get(String URL, Map<String, String> requestProperty, String outputEncoding, int timeout) throws IOException {
         return action("GET", null, URL, requestProperty, null, null, outputEncoding, timeout)[0];

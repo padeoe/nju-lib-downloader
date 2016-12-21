@@ -1,5 +1,7 @@
 package object;
 
+import spider.BookDownloader;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -9,6 +11,7 @@ import java.util.regex.Pattern;
 
 /**
  * info文件解析器。
+ *
  * info文件是由{@link BookDownloader}在下载过程中创建的文本文件。
  * 记录了一个{@link Book#toString()}
  * 默认名称是{@link BookDownloader#INFO_FILE_NAME}。
@@ -18,7 +21,7 @@ import java.util.regex.Pattern;
  * @Date: 2016/12/11
  */
 public class InfoReader {
-    String infoFilePath;
+    private String infoFilePath;
 
     public InfoReader(String infoFilePath) {
         this.infoFilePath = infoFilePath;
@@ -36,7 +39,7 @@ public class InfoReader {
             if (lines.size() > 0) {
                 info = lines.get(0);
             }
-            Pattern pattern = Pattern.compile("Book\\{id='(.*)', name='(.*)', author='(.*)', publishDate='(.*)', theme='(.*)', catalog=(.*), detailCatalog='(.*)'\\}");
+            Pattern pattern = Pattern.compile("Book\\{id='(.*)', name='(.*)', author='(.*)', publishDate='(.*)', theme='(.*)', bookClass=(.*), detailBookClass='(.*)'\\}");
             Matcher matcher = pattern.matcher(info);
             if (matcher.find()) {
                 return new Book(matcher.group(1),
@@ -44,7 +47,7 @@ public class InfoReader {
                         matcher.group(3),
                         matcher.group(4),
                         matcher.group(5),
-                        new Catalog(matcher.group(6)),
+                        new BookClass(matcher.group(6)),
                         matcher.group(7));
             }
             return null;
