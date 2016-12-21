@@ -1,7 +1,7 @@
 # NJU-lib-Downloader
 用途？自行脑补，不可描述...
 <h2>使用示例</h2>
-按书本id下载
+按在线阅读地址下载
 ```
 //通过在线阅读地址获取Book对象
 Book book = Book.getBookFromUrl("http://114.212.7.104:8181/Jpath_sky/DsrPath.do?code=153BB79FEDBAFB093F90DDD4F90950EA&ssnumber=13488955&netuser=1&jpgreadmulu=1&displaystyle=0&channel=0&ipside=0");
@@ -24,7 +24,7 @@ books.forEach(book -> book.download("C:\\Users\\padeoe\\Desktop\\libpdf", 5));
 浏览分类
 ```
 //获取根分类
-Catalog root = Catalog.getRootCatalog();
+RootCatalog root = new RootCatalog();
 
 //加载二级分类
 root.loadChild();
@@ -38,14 +38,16 @@ root.getChildren().forEach(
 ```
 图书查询
 ```
-new BookSearch().findAllBySQL("出版日期 = '2016'");//查询所有2016年出版的图书
+//查询所有2016年出版的图书
+Set<Book> books2016 = new BookSearch().findAllBySQL("出版日期 = '2016'");
 
 或者
 
-//查询2016年的书，并将这些书按照分类目录插入到对应目录节点
+//创建空的根目录
 RootCatalog root = new RootCatalog();
-Set<Book> books2016 = new BookSearch().findAllBySQL("出版日期 ='2016'", root);
-//在分类目录中查找“工业技术图书馆>自动化技术、计算机技术”分类下的图书,支持中图法分类名和分类代号
+//查询的同时建立root的子节点
+new BookSearch().findAllBySQL("出版日期 ='2016'", root);
+//在建立好的root中查找“工业技术图书馆>自动化技术、计算机技术”分类下的图书,支持中图法分类名和分类代号
 Set<Book> itbooks2016 = root.getChild("工业技术图书馆").getChild("自动化技术、计算机技术").getBooks();
 ```
 
