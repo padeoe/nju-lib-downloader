@@ -155,7 +155,7 @@ public class Book {
     /**
      * 所属分类
      */
-    private BookClass bookClass = new BookClass("all");
+    private BookClass bookClass = new RootBookClass();
     /**
      * 所属分类的中文描述。
      * “>”分割层级，

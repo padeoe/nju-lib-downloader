@@ -179,8 +179,6 @@ public class BookClass {
      */
     public BookClass(String id) {
         this.id = id;
-        this.name = null;
-        this.parent = null;
         children = new HashMap<>();
         this.isLoaded = false;
     }
@@ -577,7 +575,6 @@ public class BookClass {
      */
     private void resetCookie() throws IOException {
         cookie = NJULib.getSession();
-        System.out.println(cookie);
     }
 
     /**
@@ -602,6 +599,9 @@ public class BookClass {
 
     /**
      * 获取分类对象所有终端分类下已存储的书籍
+     *
+     * 不会触发网络请求，只是迭代收集子分类的下已存在的书籍。
+     * 如要即时从服务器查询书籍，请调用{@link #queryAllBooks()}及其重载
      *
      * @return 该分类下属所有分类的图书集合
      */
