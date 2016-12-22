@@ -19,9 +19,15 @@ public class BookClassTest {
         BookClass root = new RootBookClass();
         root.loadChild();
         int sum = 0;
-        for (BookClass child : root.getChildren().values()) {
-            sum += child.queryBooksSize();
+        for (BookClass child : root.getChildren()) {
+
+            int n = child.queryBooksSize();
+            sum += n;
+            System.out.println(child + " " + n + " (" + String.format("%02f", n / 1210.23) + "%)");
+
+
         }
+        System.out.println("图书总数" + sum);
         assertTrue(sum >= 60465);
     }
 

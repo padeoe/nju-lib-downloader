@@ -14,7 +14,7 @@ import java.net.URLDecoder;
 
 /**
  * 图书。
- *
+ * <p>
  * 对应<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a> 中的图书。
  *
  * @author padeoe

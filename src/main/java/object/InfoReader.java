@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 /**
  * info文件解析器。
- *
+ * <p>
  * info文件是由{@link BookDownloader}在下载过程中创建的文本文件。
  * 记录了一个{@link Book#toString()}
  * 默认名称是{@link BookDownloader#INFO_FILE_NAME}。

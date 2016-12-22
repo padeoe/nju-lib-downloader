@@ -103,10 +103,10 @@ public class BookClass {
      * 获取所有子分类。
      * 初始为null,若要查看子分类，必须先调用{@link #loadChild()}或者{@link #loadAllChild()}从服务器查询并加载
      *
-     * @return 子分类的Map，键是分类编号{@link #id}或分类名称{@link #name}(做了冗余存储)，值是分类对象。
+     * @return 子分类的集合
      */
-    public Map<String, BookClass> getChildren() {
-        return children;
+    public Set<BookClass> getChildren() {
+        return children.values().stream().collect(Collectors.toSet());
     }
 
     /**
@@ -224,7 +224,7 @@ public class BookClass {
     public void loadAllChild() throws IOException {
         if (!isTerminal()) {
             loadChild();
-            for (BookClass child : getChildren().values()) {
+            for (BookClass child : getChildren()) {
                 child.loadAllChild();
             }
         }
@@ -242,7 +242,7 @@ public class BookClass {
     public void downloadWithCataDir(String pathname, int threadNumber, String errorLogPath) throws IOException {
         if (!isTerminal()) {
             loadChild();
-            for (BookClass child : getChildren().values()) {
+            for (BookClass child : getChildren()) {
                 child.downloadWithCataDir(Paths.get(pathname, name == null ? id : name).toString(), threadNumber, errorLogPath);
             }
         } else {
@@ -599,14 +599,14 @@ public class BookClass {
 
     /**
      * 获取分类对象所有终端分类下已存储的书籍
-     *
+     * <p>
      * 不会触发网络请求，只是迭代收集子分类的下已存在的书籍。
      * 如要即时从服务器查询书籍，请调用{@link #queryAllBooks()}及其重载
      *
      * @return 该分类下属所有分类的图书集合
      */
     public Set<Book> getBooks() {
-        return this.getChildren().values().stream().map(BookClass::getBooks).collect(HashSet::new, Set::addAll, Set::addAll);
+        return this.getChildren().stream().map(BookClass::getBooks).collect(HashSet::new, Set::addAll, Set::addAll);
     }
 
 

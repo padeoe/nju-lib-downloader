@@ -3,8 +3,6 @@ package spider;
 import utils.network.MyHttpRequest;
 
 import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 用于获取Session

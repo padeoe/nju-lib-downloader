@@ -1,5 +1,5 @@
 # NJU-lib-Downloader
-南大校内某电子书网站的图书爬虫。
+[南京大学馆藏数字化图书平台](http://114.212.7.104:8181/markbook/)的电子书爬虫。
 <h2>文档</h2>
 [JavaDoc](https://padeoe.github.io/nju-lib-downloader/)
 <h2>使用示例</h2>
