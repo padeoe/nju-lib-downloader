@@ -103,7 +103,7 @@ public class BookSearch {
     public Set<Book> findAllBySQL(String sqlWhereClause) throws IOException {
         Set<Book> bookSet = null;
         Books firstPageBooks = searchBySQL(sqlWhereClause, 1);
-        bookSet.addAll(firstPageBooks.getBookSet());
+        bookSet = firstPageBooks.getBookSet();
         for (int i = 2; i <= firstPageBooks.getTotalPage(); i++) {
             bookSet.addAll(searchBySQL(sqlWhereClause, i).getBookSet());
         }
