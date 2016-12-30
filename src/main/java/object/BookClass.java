@@ -360,7 +360,7 @@ public class BookClass {
             String keyword = form.get(0).attr("href");
             String booksize = keyword.substring(keyword.lastIndexOf(",") + 1, keyword.length() - 1);
             int size = Integer.parseInt(booksize);
-            System.out.println("一共 " + size + " 本书");
+            System.out.println(this.getPath()+"一共 " + size + " 本书");
             Set<Book> books = queryBooks(html);
             Set<Book> downloading;
             downloadBooks(books, pathname, threadNumber, errorLogPath);
@@ -635,7 +635,7 @@ public class BookClass {
     public String getPath() {
         Stack<BookClass> parents = new Stack<>();
         BookClass bookClass = this;
-        while (!bookClass.isRoot()) {
+        while (bookClass!=null&&!bookClass.isRoot()) {
             parents.push(bookClass);
             bookClass = bookClass.getParent();
         }
