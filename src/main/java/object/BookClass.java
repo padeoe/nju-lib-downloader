@@ -171,6 +171,19 @@ public class BookClass {
     }
 
     /**
+     * 创建并初始化一个书本分类。指定分类编号，分类名称和父分类。
+     *
+     * @param id     分类编号
+     * @param name   分类名称
+     */
+    public BookClass(String id, String name) {
+        this.id = id;
+        this.name = name;
+        children = new HashMap<>();
+    }
+
+
+    /**
      * 创建一个新初始化的{@code BookClass}对象，
      * 使之中图法分类标识是{@code id}
      *
@@ -239,12 +252,16 @@ public class BookClass {
      * @param errorLogPath 错误日志路径
      * @throws IOException 连接失败的错误
      */
-    public void downloadWithCataDir(String pathname, int threadNumber, String errorLogPath) throws IOException {
+    public void  downloadWithCataDir(String pathname, int threadNumber, String errorLogPath) throws IOException {
         if (!isTerminal()) {
             loadChild();
-            for (BookClass child : getChildren()) {
-                child.downloadWithCataDir(Paths.get(pathname, name == null ? id : name).toString(), threadNumber, errorLogPath);
+            BookClass[]bookClasses=getChildren().toArray(new BookClass[]{});
+            for(int i=bookClasses.length-1;i>=0;i--){
+                bookClasses[i].downloadWithCataDir(Paths.get(pathname, name == null ? id : name).toString(), threadNumber, errorLogPath);
             }
+/*            for (BookClass child : getChildren()) {
+                child.downloadWithCataDir(Paths.get(pathname, name == null ? id : name).toString(), threadNumber, errorLogPath);
+            }*/
         } else {
             downloadAllBooks(Paths.get(pathname, name == null ? id : name).toString(), threadNumber, errorLogPath);
         }
@@ -289,7 +306,7 @@ public class BookClass {
      * @throws IOException 从服务器查询书本列表时出错
      */
     public Set<Book> queryAllBooks() throws IOException {
-        return queryAllBooks(5);
+        return queryAllBooks(1);
     }
 
     /**
@@ -476,7 +493,7 @@ public class BookClass {
                     bookClasses = tmplist.toArray(bookClasses);
                 }
             }
-            bookBookClass = this.link(bookClasses);
+            bookBookClass = new RootBookClass().link(bookClasses);
 
             //获取作者，出版日期，主题词，分类
             String info = element.text();

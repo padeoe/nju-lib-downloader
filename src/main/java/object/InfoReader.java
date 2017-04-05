@@ -39,7 +39,7 @@ public class InfoReader {
             if (lines.size() > 0) {
                 info = lines.get(0);
             }
-            Pattern pattern = Pattern.compile("Book\\{id='(.*)', name='(.*)', author='(.*)', publishDate='(.*)', theme='(.*)', bookClass=(.*), detailBookClass='(.*)'\\}");
+            Pattern pattern = Pattern.compile("Book\\{id='(.*)', name='(.*)', author='(.*)', publishDate='(.*)', theme='(.*)', catalog=(.*), detailCatalog='(.*)'\\}");
             Matcher matcher = pattern.matcher(info);
             if (matcher.find()) {
                 return new Book(matcher.group(1),

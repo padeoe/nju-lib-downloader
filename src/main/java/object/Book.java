@@ -11,6 +11,7 @@ import utils.network.MyHttpRequest;
 
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.StringTokenizer;
 
 /**
  * 图书。
@@ -30,6 +31,10 @@ public class Book {
      */
     private String name;
     private String author;
+    /**
+     * 书本出本社
+     */
+    private String press;
 
     /**
      * 初始化一个新创建的{@code Book}对象。
@@ -95,6 +100,22 @@ public class Book {
      */
     public void setAuthor(String author) {
         this.author = author;
+    }
+
+    /**
+     * 获取书本出版社
+     * @return
+     */
+    public String getPress() {
+        return press;
+    }
+
+    /**
+     * 指定书本出版社
+     * @param press
+     */
+    public void setPress(String press) {
+        this.press = press;
     }
 
     /**
@@ -204,12 +225,11 @@ public class Book {
      * @return Book对象，仅指定了id
      */
     public static Book getBookFromUrl(String onlineReadUrl) {
-        for (String para : onlineReadUrl.split("&")) {
-            if (para.startsWith("ssnumber=")) {
-                Book book = new Book(para.substring(9, para.length()));
-                book.fillBookInfoByUrl(onlineReadUrl);
-                return book;
-            }
+        String[]para=onlineReadUrl.split("/");
+        if(para!=null&&para.length>6){
+            Book book=new Book(para[para.length-3]);
+            book.fillBookInfoByUrl(onlineReadUrl);
+            return book;
         }
         return null;
     }
@@ -222,19 +242,21 @@ public class Book {
      */
     public void fillBookInfoByUrl(String url) {
         try {
-            String html = new BookDownloader(this).getBookViewPageHtml(url);
-            html = html.replaceAll("<!--", "<");
-            html = html.replaceAll("-->", "");
+            String html = new BookDownloader(this,url).getBookViewPageHtml();
             Document doc = Jsoup.parse(html);
             Elements nameNode = doc.getElementsByTag("title");
-            this.name = nameNode.text();
-            Elements infoNode = doc.getElementsByTag("span").not("[style]");
-            for (Element node : infoNode) {
-                if (node.text().startsWith("作者：")) {
-                    this.author = node.text().substring(3, node.text().length());
+            this.name = nameNode.text().replaceAll("\\s+", " ");
+            Elements infoNode = doc.select("div[id=bookinfo]");
+            if(infoNode!=null){
+                String bookinfo=infoNode.text();
+                int author_end=bookinfo.indexOf(name);
+                if(author_end!=-1){
+                    this.author=infoNode.text().substring(0,author_end-1);
                 }
-                if (node.text().startsWith("出版日期：")) {
-                    this.publishDate = node.text().substring(5, node.text().length());
+                String [] bookInfo=infoNode.text().substring(author_end,infoNode.text().length()).split(",");
+                if(bookInfo.length>2){
+                    this.press=bookInfo[1];
+                    this.publishDate=bookInfo[2];
                 }
             }
         } catch (BookDLException e) {
@@ -271,10 +293,12 @@ public class Book {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", author='" + author + '\'' +
+                ", press='" + press + '\'' +
                 ", publishDate='" + publishDate + '\'' +
                 ", theme='" + theme + '\'' +
-                ", bookClass='" + bookClass.getPath() + '\'' +
+                ", bookClass=" + bookClass +
                 ", detailBookClass='" + detailBookClass + '\'' +
+                ", cookie='" + cookie + '\'' +
                 '}';
     }
 
@@ -283,8 +307,8 @@ public class Book {
      * 将会在{@code pathname}下创建一个以书名命名的文件夹，并存储所有图片。
      * 错误日志将在当前路径下名为"error.log"
      */
-    public void download() {
-        BookDownloader bookDownloader = new BookDownloader(this);
+    public void download(String onlineReadUrl) {
+        BookDownloader bookDownloader = new BookDownloader(this,onlineReadUrl);
         bookDownloader.downloadAllImages();
     }
 
@@ -296,8 +320,8 @@ public class Book {
      * @param pathname     下载存储目录
      * @param threadNumber 下载线程数
      */
-    public void download(String pathname, int threadNumber) {
-        BookDownloader bookDownloader = new BookDownloader(this);
+    public void download(String pathname, int threadNumber,String onlineReadUrl) {
+        BookDownloader bookDownloader = new BookDownloader(this,onlineReadUrl);
         bookDownloader.setSavePath(pathname);
         bookDownloader.setThreadNumber(threadNumber);
         bookDownloader.downloadAllImages();
@@ -311,8 +335,8 @@ public class Book {
      * @param threadNumber 线程数
      * @param errorLogPath 错误日志路径
      */
-    public void download(String pathname, int threadNumber, String errorLogPath) {
-        BookDownloader bookDownloader = new BookDownloader(this);
+    public void download(String pathname, int threadNumber, String onlineReadUrl,String errorLogPath) {
+        BookDownloader bookDownloader = new BookDownloader(this,onlineReadUrl);
         bookDownloader.setSavePath(pathname);
         bookDownloader.setThreadNumber(threadNumber);
         bookDownloader.setErrorLogPath(errorLogPath);

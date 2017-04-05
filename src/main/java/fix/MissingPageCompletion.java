@@ -100,4 +100,8 @@ public class MissingPageCompletion {
     public void setPattern(Pattern pattern) {
         this.pattern = pattern;
     }
+
+    public static void main(String[] args) {
+        new MissingPageCompletion("/opt/seafile/wkk_test/error.log").complete();
+    }
 }

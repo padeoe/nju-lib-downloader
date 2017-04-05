@@ -258,4 +258,31 @@ public class MyHttpRequest {
 
         }
     }
+
+    public static String getRedirect(String action, String postData, String URL, Map<String, String> requestProperty, String inputEncoding, String outputEncoding, int timeout) throws Exception {
+            byte[] postAsBytes = new byte[]{};
+            if (postData != null) {
+                postAsBytes = postData.getBytes(inputEncoding);
+            }
+            java.net.URL url = new URL(URL);
+            HttpURLConnection connection = (HttpURLConnection) url
+                    .openConnection();
+            connection.setConnectTimeout(timeout);
+            connection.setDoOutput(true);
+            connection.setRequestMethod(action);
+            connection.setUseCaches(false);
+           /*           java 1.6 does not support
+           requestProperty.forEach((k,v) -> connection.setRequestProperty(k, v));
+           */
+            if (requestProperty != null) {
+                for (Map.Entry<String, String> entry : requestProperty.entrySet()) {
+                    connection.setRequestProperty(entry.getKey(), entry.getValue());
+                }
+            }
+            connection.setRequestProperty("Content-Length", String.valueOf(postAsBytes.length));
+            connection.connect();
+            String newUrl = connection.getHeaderField("Location");
+            connection.disconnect();
+            return newUrl;
+    }
 }

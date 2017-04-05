@@ -1,6 +1,12 @@
+import object.Book;
 import object.BookClass;
+import object.Books;
+import object.RootBookClass;
+import spider.BookSearch;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author padeoe
@@ -17,14 +23,12 @@ public class Start {
     public static void main(String[] args) {
         //创建一个书目分类，此处定义的是0T0P3010 计算机类，具体解释请参考中图法
         // 格式必须和<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a>一致
-        BookClass root = new BookClass("0T0P");
+        BookClass root=new BookClass("0N","自然科学总论",new RootBookClass());
         try {
-            System.out.println(root.queryBooksSize());
-            /*root.downloadWithCataDir("G:\\", 5, "G:\\未分类\\pageDLFail.txt");*/
+            root.downloadWithCataDir("F:\\Book\\all",5,"F:\\error.log");
+            //      root.downloadWithCataDir("/opt/seafile/wkk_test/all",5,"/opt/seafile/wkk_test/error.log");
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 }
