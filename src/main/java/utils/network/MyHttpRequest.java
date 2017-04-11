@@ -8,6 +8,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -98,7 +100,16 @@ public class MyHttpRequest {
             try (InputStream inputStream = connection.getInputStream()) {
                 len = inputStream.read(readData);
             }*/
+
+
         InputStream inputStream = null;
+        Map<String, List<String>> headers;
+/*        if(connection.getURL().toString().indexOf(";")!=-1){
+            headers=new HashMap<>();
+            headers.put("Set-Cookie", Arrays.asList(connection.getURL().toString().split(";")[1]));
+            connection.disconnect();
+            return new ReturnData(null, headers);
+        }*/
 
         try {
             inputStream = connection.getInputStream();
@@ -118,10 +129,12 @@ public class MyHttpRequest {
                 }
             }
         }
+        headers = connection.getHeaderFields();
 
-        Map<String, List<String>> headers = connection.getHeaderFields();
         connection.disconnect();
-        return new ReturnData(myByteArray.getBuffer(), headers);
+        byte[] bytes = new byte[myByteArray.getSize()];
+        System.arraycopy(myByteArray.getBuffer(),0,bytes,0,bytes.length);
+        return new ReturnData(bytes, headers);
     }
 
     /**
@@ -257,32 +270,5 @@ public class MyHttpRequest {
             return -4;
 
         }
-    }
-
-    public static String getRedirect(String action, String postData, String URL, Map<String, String> requestProperty, String inputEncoding, String outputEncoding, int timeout) throws Exception {
-            byte[] postAsBytes = new byte[]{};
-            if (postData != null) {
-                postAsBytes = postData.getBytes(inputEncoding);
-            }
-            java.net.URL url = new URL(URL);
-            HttpURLConnection connection = (HttpURLConnection) url
-                    .openConnection();
-            connection.setConnectTimeout(timeout);
-            connection.setDoOutput(true);
-            connection.setRequestMethod(action);
-            connection.setUseCaches(false);
-           /*           java 1.6 does not support
-           requestProperty.forEach((k,v) -> connection.setRequestProperty(k, v));
-           */
-            if (requestProperty != null) {
-                for (Map.Entry<String, String> entry : requestProperty.entrySet()) {
-                    connection.setRequestProperty(entry.getKey(), entry.getValue());
-                }
-            }
-            connection.setRequestProperty("Content-Length", String.valueOf(postAsBytes.length));
-            connection.connect();
-            String newUrl = connection.getHeaderField("Location");
-            connection.disconnect();
-            return newUrl;
     }
 }
