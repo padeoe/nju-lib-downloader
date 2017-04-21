@@ -1,4 +1,4 @@
-package object.exception;
+package com.sslibrary.object.exception;
 
 /**
  * 下载图书的某一页时失败。

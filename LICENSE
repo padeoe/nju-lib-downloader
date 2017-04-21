@@ -129,11 +129,11 @@ implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
-produce the work, or an object code interpreter used to run it.
+produce the work, or an com.sslibrary.object code interpreter used to run it.
 
-  The "Corresponding Source" for a work in object code form means all
+  The "Corresponding Source" for a work in com.sslibrary.object code form means all
 the source code needed to generate, install, and (for an executable
-work) run the object code and to modify the work, including scripts to
+work) run the com.sslibrary.object code and to modify the work, including scripts to
 control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
@@ -244,21 +244,21 @@ parts of the aggregate.
 
   6. Conveying Non-Source Forms.
 
-  You may convey a covered work in object code form under the terms
+  You may convey a covered work in com.sslibrary.object code form under the terms
 of sections 4 and 5, provided that you also convey the
 machine-readable Corresponding Source under the terms of this License,
 in one of these ways:
 
-    a) Convey the object code in, or embodied in, a physical product
+    a) Convey the com.sslibrary.object code in, or embodied in, a physical product
     (including a physical distribution medium), accompanied by the
     Corresponding Source fixed on a durable physical medium
     customarily used for software interchange.
 
-    b) Convey the object code in, or embodied in, a physical product
+    b) Convey the com.sslibrary.object code in, or embodied in, a physical product
     (including a physical distribution medium), accompanied by a
     written offer, valid for at least three years and valid for as
     long as you offer spare parts or customer support for that product
-    model, to give anyone who possesses the object code either (1) a
+    model, to give anyone who possesses the com.sslibrary.object code either (1) a
     copy of the Corresponding Source for all the software in the
     product that is covered by this License, on a durable physical
     medium customarily used for software interchange, for a price no
@@ -266,33 +266,33 @@ in one of these ways:
     conveying of source, or (2) access to copy the
     Corresponding Source from a network server at no charge.
 
-    c) Convey individual copies of the object code with a copy of the
+    c) Convey individual copies of the com.sslibrary.object code with a copy of the
     written offer to provide the Corresponding Source.  This
     alternative is allowed only occasionally and noncommercially, and
-    only if you received the object code with such an offer, in accord
+    only if you received the com.sslibrary.object code with such an offer, in accord
     with subsection 6b.
 
-    d) Convey the object code by offering access from a designated
+    d) Convey the com.sslibrary.object code by offering access from a designated
     place (gratis or for a charge), and offer equivalent access to the
     Corresponding Source in the same way through the same place at no
     further charge.  You need not require recipients to copy the
-    Corresponding Source along with the object code.  If the place to
-    copy the object code is a network server, the Corresponding Source
+    Corresponding Source along with the com.sslibrary.object code.  If the place to
+    copy the com.sslibrary.object code is a network server, the Corresponding Source
     may be on a different server (operated by you or a third party)
     that supports equivalent copying facilities, provided you maintain
-    clear directions next to the object code saying where to find the
+    clear directions next to the com.sslibrary.object code saying where to find the
     Corresponding Source.  Regardless of what server hosts the
     Corresponding Source, you remain obligated to ensure that it is
     available for as long as needed to satisfy these requirements.
 
-    e) Convey the object code using peer-to-peer transmission, provided
-    you inform other peers where the object code and Corresponding
+    e) Convey the com.sslibrary.object code using peer-to-peer transmission, provided
+    you inform other peers where the com.sslibrary.object code and Corresponding
     Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
-  A separable portion of the object code, whose source code is excluded
+  A separable portion of the com.sslibrary.object code, whose source code is excluded
 from the Corresponding Source as a System Library, need not be
-included in conveying the object code work.
+included in conveying the com.sslibrary.object code work.
 
   A "User Product" is either (1) a "consumer product", which means any
 tangible personal property which is normally used for personal, family,
@@ -311,11 +311,11 @@ the only significant mode of use of the product.
 procedures, authorization keys, or other information required to install
 and execute modified versions of a covered work in that User Product from
 a modified version of its Corresponding Source.  The information must
-suffice to ensure that the continued functioning of the modified object
+suffice to ensure that the continued functioning of the modified com.sslibrary.object
 code is in no case prevented or interfered with solely because
 modification has been made.
 
-  If you convey an object code work under this section in, or with, or
+  If you convey an com.sslibrary.object code work under this section in, or with, or
 specifically for use in, a User Product, and the conveying occurs as
 part of a transaction in which the right of possession and use of the
 User Product is transferred to the recipient in perpetuity or for a
@@ -323,7 +323,7 @@ fixed term (regardless of how the transaction is characterized), the
 Corresponding Source conveyed under this section must be accompanied
 by the Installation Information.  But this requirement does not apply
 if neither you nor any third party retains the ability to install
-modified object code on the User Product (for example, the work has
+modified com.sslibrary.object code on the User Product (for example, the work has
 been installed in ROM).
 
   The requirement to provide Installation Information does not include a

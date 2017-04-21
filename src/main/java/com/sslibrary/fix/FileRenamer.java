@@ -1,4 +1,4 @@
-package fix;
+package com.sslibrary.fix;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +18,7 @@ import java.util.Arrays;
  */
 public class FileRenamer {
     public static void main(String args[]) {
-        renameZero("G:\\Test\\");
+        renameZero("G:\\com.sslibrary.Test\\");
     }
 
     public static void renameZero(String rootDirPath) {

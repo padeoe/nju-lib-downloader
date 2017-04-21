@@ -1,4 +1,4 @@
-package object.exception;
+package com.sslibrary.object.exception;
 
 import java.util.Vector;
 

@@ -1,4 +1,4 @@
-package spider;
+package com.sslibrary.spider;
 
 import utils.network.MyHttpRequest;
 

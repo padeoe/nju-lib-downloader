@@ -1,4 +1,4 @@
-package object;
+package com.sslibrary.object;
 
 /**
  * 根分类

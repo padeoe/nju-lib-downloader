@@ -1,11 +1,11 @@
-package spider;
+package com.sslibrary.spider;
 
-import fix.MissingPageCompletion;
-import object.Book;
-import object.InfoReader;
-import object.exception.BookDLException;
-import object.exception.BookPagesDLException;
-import object.exception.PageDLException;
+import com.sslibrary.fix.MissingPageCompletion;
+import com.sslibrary.object.Book;
+import com.sslibrary.object.InfoReader;
+import com.sslibrary.object.exception.BookDLException;
+import com.sslibrary.object.exception.BookPagesDLException;
+import com.sslibrary.object.exception.PageDLException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -367,7 +367,7 @@ public class BookDownloader {
      *                 If a deletion fails, the method stops attempting to
      *                 delete and returns "false".
      */
-    private static boolean deleteDir(File dir) {
+    public static boolean deleteDir(File dir) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
             //递归删除目录中的子目录下

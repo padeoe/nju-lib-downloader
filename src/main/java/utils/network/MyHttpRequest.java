@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
+import java.net.*;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +50,7 @@ public class MyHttpRequest {
         }
         java.net.URL url = new URL(URL);
         HttpURLConnection connection = (HttpURLConnection) url
-                .openConnection();
+                .openConnection(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 1080)));
         connection.setConnectTimeout(timeout);
         connection.setRequestMethod(action);
         if (action.toLowerCase().equals("post")) {
@@ -98,7 +97,16 @@ public class MyHttpRequest {
             try (InputStream inputStream = connection.getInputStream()) {
                 len = inputStream.read(readData);
             }*/
+
+
         InputStream inputStream = null;
+        Map<String, List<String>> headers;
+/*        if(connection.getURL().toString().indexOf(";")!=-1){
+            headers=new HashMap<>();
+            headers.put("Set-Cookie", Arrays.asList(connection.getURL().toString().split(";")[1]));
+            connection.disconnect();
+            return new ReturnData(null, headers);
+        }*/
 
         try {
             inputStream = connection.getInputStream();
@@ -118,10 +126,12 @@ public class MyHttpRequest {
                 }
             }
         }
+        headers = connection.getHeaderFields();
 
-        Map<String, List<String>> headers = connection.getHeaderFields();
         connection.disconnect();
-        return new ReturnData(myByteArray.getBuffer(), headers);
+        byte[] bytes = new byte[myByteArray.getSize()];
+        System.arraycopy(myByteArray.getBuffer(),0,bytes,0,bytes.length);
+        return new ReturnData(bytes, headers);
     }
 
     /**

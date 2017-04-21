@@ -1,11 +1,11 @@
-package object;
+package com.sslibrary.object;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import spider.BookDownloader;
-import spider.NJULib;
+import com.sslibrary.spider.BookDownloader;
+import com.sslibrary.spider.NJULib;
 import utils.conversion.MyDecoder;
 import utils.network.MyHttpRequest;
 
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * 对应<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a> 中的图书。
  * 同时分类名和分类编号满足中图法分类。是树结构。具有查询子分类和查询分类下书籍列表，批量下载分类书籍等功能。
  * 如果你没有足够信息构造实例，可以通过{@link RootBookClass}查询所有分类来获取实例。
- * 或者{@link spider.BookSearch}中的一些方法获取实例。
+ * 或者{@link com.sslibrary.spider.BookSearch}中的一些方法获取实例。
  *
  * @author padeoe
  * @Date: 2016/12/08

@@ -1,9 +1,9 @@
-package object;
+package com.sslibrary.object;
 
 import java.util.Set;
 
 /**
- * 书本查询的结果。{@link spider.BookSearch}类某些方法的返回值用到本类
+ * 书本查询的结果。{@link com.sslibrary.spider.BookSearch}类某些方法的返回值用到本类
  * 包含了查询出的图书当前页集合，以及查询结果的总页数，书本总数。
  *
  * @author padeoe

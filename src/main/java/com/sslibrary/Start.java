@@ -1,4 +1,6 @@
-import object.BookClass;
+package com.sslibrary;
+
+import com.sslibrary.object.BookClass;
 
 import java.io.IOException;
 
