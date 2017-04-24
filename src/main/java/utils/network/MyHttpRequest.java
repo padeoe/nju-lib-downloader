@@ -50,7 +50,7 @@ public class MyHttpRequest {
         }
         java.net.URL url = new URL(URL);
         HttpURLConnection connection = (HttpURLConnection) url
-                .openConnection(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 1080)));
+                .openConnection(/*new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 1080))*/);
         connection.setConnectTimeout(timeout);
         connection.setRequestMethod(action);
         if (action.toLowerCase().equals("post")) {

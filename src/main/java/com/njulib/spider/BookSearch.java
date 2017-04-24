@@ -1,8 +1,8 @@
-package com.sslibrary.spider;
+package com.njulib.spider;
 
-import com.sslibrary.object.Book;
-import com.sslibrary.object.Books;
-import com.sslibrary.object.RootBookClass;
+import com.njulib.object.Book;
+import com.njulib.object.Books;
+import com.njulib.object.RootBookClass;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;

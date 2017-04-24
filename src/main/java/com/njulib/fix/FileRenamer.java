@@ -1,4 +1,4 @@
-package com.sslibrary.fix;
+package com.njulib.fix;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +18,7 @@ import java.util.Arrays;
  */
 public class FileRenamer {
     public static void main(String args[]) {
-        renameZero("G:\\com.sslibrary.Test\\");
+        renameZero("G:\\com.njulib.Test\\");
     }
 
     public static void renameZero(String rootDirPath) {

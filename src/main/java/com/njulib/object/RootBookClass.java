@@ -1,4 +1,4 @@
-package com.sslibrary.object;
+package com.njulib.object;
 
 /**
  * 根分类

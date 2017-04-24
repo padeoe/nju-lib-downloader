@@ -1,4 +1,4 @@
-package com.sslibrary.object;
+package com.njulib.object;
 
 import java.util.HashSet;
 import java.util.Set;

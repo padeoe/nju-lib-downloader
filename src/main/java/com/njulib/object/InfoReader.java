@@ -1,6 +1,6 @@
-package com.sslibrary.object;
+package com.njulib.object;
 
-import com.sslibrary.spider.BookDownloader;
+import com.njulib.spider.BookDownloader;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -1,12 +1,12 @@
-package com.sslibrary.object;
+package com.njulib.object;
 
-import com.sslibrary.object.exception.BookDLException;
+import com.njulib.object.exception.BookDLException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import com.sslibrary.spider.BookDownloader;
-import com.sslibrary.spider.NJULib;
+import com.njulib.spider.BookDownloader;
+import com.njulib.spider.NJULib;
 import utils.network.MyHttpRequest;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class Book {
      * 初始化一个新创建的{@code Book}对象。
      * <p>
      * 如果你没有足够的参数信息调用该方法创建对象,可调用{@link #getBookFromUrl(String)}通过书本的在线阅读地址获取实例，
-     * 或者使用{@link com.sslibrary.spider.BookSearch}中的方法根据书名等字段查询并创建满足条件的的图书实例。
+     * 或者使用{@link com.njulib.spider.BookSearch}中的方法根据书名等字段查询并创建满足条件的的图书实例。
      *
      * @param id 书本id，需要和<a href="http://114.212.7.104:8181/markbook/">南京大学馆藏数字化图书平台</a>服务器一致
      */
@@ -176,7 +176,7 @@ public class Book {
     /**
      * 初始化一个新创建的{@code Book}对象。需要{@code Book}的所有属性。
      * 如果你没有足够的参数信息调用该方法创建对象,可调用{@link #getBookFromUrl(String)}通过书本的在线阅读地址获取实例，
-     * 或者使用{@link com.sslibrary.spider.BookSearch}中的方法根据书名等字段查询并创建满足条件的的图书实例。
+     * 或者使用{@link com.njulib.spider.BookSearch}中的方法根据书名等字段查询并创建满足条件的的图书实例。
      *
      * @param id              {@code Book}的id。该id是服务器命名的
      * @param name            书名

@@ -1,4 +1,4 @@
-package com.sslibrary.object.exception;
+package com.njulib.object.exception;
 
 /**
  * 下载图书的某一页时失败。

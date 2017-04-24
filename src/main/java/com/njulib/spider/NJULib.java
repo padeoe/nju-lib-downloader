@@ -1,4 +1,4 @@
-package com.sslibrary.spider;
+package com.njulib.spider;
 
 import utils.network.MyHttpRequest;
 

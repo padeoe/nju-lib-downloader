@@ -1,11 +1,11 @@
-package com.sslibrary.spider;
+package com.njulib.spider;
 
-import com.sslibrary.fix.MissingPageCompletion;
-import com.sslibrary.object.Book;
-import com.sslibrary.object.InfoReader;
-import com.sslibrary.object.exception.BookDLException;
-import com.sslibrary.object.exception.BookPagesDLException;
-import com.sslibrary.object.exception.PageDLException;
+import com.njulib.fix.MissingPageCompletion;
+import com.njulib.object.Book;
+import com.njulib.object.InfoReader;
+import com.njulib.object.exception.BookDLException;
+import com.njulib.object.exception.BookPagesDLException;
+import com.njulib.object.exception.PageDLException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

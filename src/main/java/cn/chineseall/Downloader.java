@@ -5,7 +5,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
-import com.sslibrary.spider.BookDownloader;
+import com.njulib.spider.BookDownloader;
 import utils.network.MyHttpRequest;
 import utils.network.ReturnData;
 
