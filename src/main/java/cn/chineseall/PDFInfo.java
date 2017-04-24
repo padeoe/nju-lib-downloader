@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class PDFInfo {
     public static void main(String[] args) {
-        addBookMark(new Book("10000328908","汉语大词典订补","汉语大词典订补","汉语大词典编纂处","2010-12-01",""),"C:\\Users\\padeoe\\Desktop\\总.pdf","C:\\Users\\padeoe\\Desktop\\汉语大词典订补.pdf");
+        addBookMark(new Book("10000328908","汉语大词典订补","汉语大词典订补","汉语大词典编纂处","2010-12-01","",""),"C:\\Users\\padeoe\\Desktop\\总.pdf","C:\\Users\\padeoe\\Desktop\\汉语大词典订补.pdf");
     }
 
     public static String getTitle(String src){

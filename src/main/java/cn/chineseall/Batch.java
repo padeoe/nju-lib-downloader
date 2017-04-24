@@ -4,8 +4,10 @@ import com.sslibrary.spider.BookDownloader;
 
 import java.io.IOException;
 import java.lang.*;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Created by padeoe on 2017/4/14.
@@ -17,18 +19,19 @@ public class Batch {
             className=args[0];
         }
         try {
-            Set<Book>books= new Class(className).getAllBooks();
-            System.out.println(className+"分类共"+books.size()+"本书");
+            Stream<String> bookStream=new Class(className).getNewBooks().flatMap(books -> books.stream().map(Book::toString));
+            Files.write(Paths.get("C:\\Users\\padeoe\\Desktop\\book.txt"), (Iterable<String>)bookStream::iterator);
+/*            System.out.println(className+"分类共"+books.size()+"本书");
             String finalClassName = className;
-            books.parallelStream()./*filter(book -> book.getAuthor().indexOf("(美")!=-1||book.getAuthor().indexOf("[美")!=-1).*/forEach(book -> {
-                Downloader bookDownloader = new Downloader(book, new CoreService("testusername", "testusername"));
+            books.parallelStream().*//*filter(book -> book.getAuthor().indexOf("(美")!=-1||book.getAuthor().indexOf("[美")!=-1).*//*forEach(book -> {
+                Downloader bookDownloader = new Downloader(book, new CoreService("", ""));
                 bookDownloader.setPath(Paths.get("/mnt/f/"+ finalClassName));
                 bookDownloader.setTmpPathDir(Paths.get("/mnt/f/tmp"));
                 bookDownloader.setThreadNumber(2);
                 if(!bookDownloader.downloadBook()){
                     BookDownloader.writeFile("/mnt/f/error.txt",book.getId()+" "+book.getName());
                 }
-            });
+            });*/
         } catch (IOException e) {
             e.printStackTrace();
         }

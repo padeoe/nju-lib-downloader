@@ -7,6 +7,7 @@ import org.jsoup.select.Elements;
 import utils.network.MyHttpRequest;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class Book {
     String author;
     String publishDate;
     String introduction;
+    String coverUrl;
 
     public String getId() {
         return id;
@@ -69,17 +71,26 @@ public class Book {
         this.introduction = introduction;
     }
 
+    public String getCoverUrl() {
+        return coverUrl;
+    }
+
+    public void setCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
+    }
+
     public Book(String id){
         this.id=id;
     }
 
-    public Book(String id, String name, String press, String author, String publishDate, String introduction) {
+    public Book(String id, String name, String press, String author, String publishDate, String introduction, String coverUrl) {
         this.id = id;
         this.name = name;
         this.press = press;
         this.author = author;
         this.publishDate = publishDate;
         this.introduction = introduction;
+        this.coverUrl = coverUrl;
     }
 
     @Override
@@ -90,6 +101,8 @@ public class Book {
                 ", press='" + press + '\'' +
                 ", author='" + author + '\'' +
                 ", publishDate='" + publishDate + '\'' +
+                ", introduction='" + introduction + '\'' +
+                ", coverUrl='" + coverUrl + '\'' +
                 '}';
     }
 
@@ -158,8 +171,58 @@ public class Book {
         return result;
     }
 
-    public static void main(String[] args) {
+    public static List<Book>getBookFromHTML(String html){
+        Document doc= Jsoup.parse(html);
+        Elements infoNode=doc.select("div[class=boxListLi5]");
+        List<Book>books=new ArrayList<>(30);
+        if(infoNode!=null){
+            for(int i=0;i<infoNode.size();i++){
+                String id=null,name=null,author=null,publishDate=null,press=null,introduction=null,coverUrl=null;
+                Elements idNameNode=infoNode.get(i).select("a[target=_blank][title]");
+                if(idNameNode!=null&&idNameNode.size()>0){
+                    Elements coverImageNode=infoNode.get(i).select("img[src]");
+                    if(coverImageNode!=null&&coverImageNode.size()>0){
+                        coverUrl=coverImageNode.attr("src");
+                    }
+                    name=idNameNode.get(0).attr("title");
+                    id=idNameNode.get(0).attr("href");
+                    if(id.indexOf("/book/")!=-1){
+                        id=id.substring(6,id.length());
+                    }
+                    Elements pressNode=infoNode.get(i).select("span");
+                    if(pressNode!=null&&pressNode.size()>0){
+                        String pressInfo=pressNode.get(0).text();
+                        if(pressInfo!=null){
+                            String[]pressInfoArray=pressInfo.split("/");
+                            if(pressInfoArray!=null&&pressInfoArray.length==3){
+                                author=pressInfoArray[0].trim();
+                                press=pressInfoArray[1].trim();
+                                publishDate=pressInfoArray[2].trim();
+                            }
+                        }
+                    }
+                    Elements introNode=infoNode.get(i).select("p");
+                    if(introNode!=null&&introNode.size()>0){
+                        introduction=introNode.text();
+                    }
+                }
+                if(id!=null){
+                    Book book=new Book(id,name,press,author,publishDate,introduction,coverUrl);
+                    books.add(book);
+                    System.out.println(book);
+                }
+            }
+        }
+        return books;
+    }
 
+
+    public static void main(String[] args) {
+/*        try {
+            new Class("TP").getBooks(1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
     }
 
 }

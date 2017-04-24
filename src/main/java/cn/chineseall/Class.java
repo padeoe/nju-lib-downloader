@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static cn.chineseall.Book.getBookFromHTML;
 
 /**
  * Created by padeoe on 2017/4/11.
@@ -26,7 +30,11 @@ public class Class {
     public int getBookSize() throws IOException {
         String url= CoreService.baseUrl+"/org/show/sort/"+id+"/0";
         String result=MyHttpRequest.get(url,null,"UTF-8",3000);
-        Document doc= Jsoup.parse(result);
+        return getBookSizeFromHtml(result);
+    }
+
+    public static int getBookSizeFromHtml(String html){
+        Document doc= Jsoup.parse(html);
         Elements sizeNode=doc.select("input[id=totalSize]");
         if(sizeNode!=null&&sizeNode.size()>0){
             String sizeString=sizeNode.attr("value");
@@ -36,59 +44,48 @@ public class Class {
             }
         }
         return -1;
-
     }
-    public List<Book> getBooks(int page) throws IOException {
+    public List<Book> getBooks(int page) {
         String url= CoreService.baseUrl+"/org/show/sort/"+id+"/"+page;
-        String result=MyHttpRequest.get(url,null,"UTF-8",3000);
-        Document doc= Jsoup.parse(result);
-        Elements infoNode=doc.select("div[class=boxListLi5]");
-        List<Book>books=new ArrayList<>(30);
-        if(infoNode!=null){
-            for(int i=0;i<infoNode.size();i++){
-                String id=null,name=null,author=null,publishDate=null,press=null,introduction=null;
-                Elements idNameNode=infoNode.get(i).select("a[target=_blank][title]");
-                if(idNameNode!=null&&idNameNode.size()>0){
-                    name=idNameNode.get(0).attr("title");
-                    id=idNameNode.get(0).attr("href");
-                    if(id.indexOf("/book/")!=-1){
-                        id=id.substring(6,id.length());
-                    }
-                    Elements pressNode=infoNode.get(i).select("span");
-                    if(pressNode!=null&&pressNode.size()>0){
-                        String pressInfo=pressNode.get(0).text();
-                        if(pressInfo!=null){
-                            String[]pressInfoArray=pressInfo.split("/");
-                            if(pressInfoArray!=null&&pressInfoArray.length==3){
-                                author=pressInfoArray[0].trim();
-                                press=pressInfoArray[1].trim();
-                                publishDate=pressInfoArray[2].trim();
-                            }
-                        }
-                    }
-                    Elements introNode=infoNode.get(i).select("p");
-                    if(introNode!=null&&introNode.size()>0){
-                        introduction=introNode.text();
-                    }
-                }
-                if(id!=null){
-                    Book book=new Book(id,name,press,author,publishDate,introduction);
-                    books.add(book);
-                    System.out.println(book);
-                }
-            }
+        String result= null;
+        try {
+            result = MyHttpRequest.get(url,null,"UTF-8",3000);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return books;
+        return getBookFromHTML(result);
     }
 
-    public Set<Book> getAllBooks() throws IOException {
-        int threadNumber=10;
+    public List<Book> getNewBooks(int page) {
+        String url= CoreService.baseUrl+"/org/show/selfsort/150/"+page;
+        String result= null;
+        try {
+            result = MyHttpRequest.get(url,null,"UTF-8",3000);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return getBookFromHTML(result);
+    }
+
+    public Stream<List<Book>> getNewBooks() throws IOException {
+        int size= getBookSizeFromHtml(MyHttpRequest.get(CoreService.baseUrl+"/org/show/selfsort/150/0",null,"UTF-8",3000));
+        int lastPage = size / 30 + 1;//最后一页的页码
+        return IntStream.range(0,lastPage+1).parallel().mapToObj(page -> getNewBooks(page));
+    }
+
+
+
+    public Stream<List<Book>> getAllBooks() throws IOException {
         int size= getBookSize();
+        int lastPage = size / 30 + 1;//最后一页的页码
+        return IntStream.range(0,lastPage+1).parallel().mapToObj(page -> getBooks(page));
+/*        int threadNumber=10;
+
             Set<Book> books = new HashSet<>();
             List<PageGetThread> threadList = new ArrayList<>();
 
             AtomicInteger needGettedPage = new AtomicInteger(0);//需要获取的页码
-            int lastPage = size / 30 + 1;//最后一页的页码
+
             //开始多线程刷所有页码
             for (int threadN = 0; threadN < threadNumber; threadN++) {
                 threadList.add(new PageGetThread(needGettedPage, lastPage));
@@ -105,7 +102,7 @@ public class Class {
                 }
             }
             threadList.forEach(pageGetThread -> books.addAll(pageGetThread.getThreadBooks()));
-            return books;
+            return books;*/
     }
 
     /**
@@ -126,12 +123,12 @@ public class Class {
             while (true) {
                 int gettingpage = needGettedPage.getAndIncrement();
                 if (gettingpage <= lastPage) {
-                    try {
+                 //   try {
                      //  System.out.println("正在获取第"+gettingpage+"页");
                         books.addAll(getBooks(gettingpage));
-                    } catch (IOException e) {
+/*                    } catch (IOException e) {
                         e.printStackTrace();
-                    }
+                    }*/
                 } else {
                     break;
                 }
@@ -179,7 +176,7 @@ public class Class {
         return stringBuffer.toString();
     }
     public static void main(String[] args) {
-        try {
+/*        try {
 
             new Class("TP").getAllBooks().forEach(book -> output.append(getBookLineInTable(book)));
             output.append("</table>\n");
@@ -195,7 +192,7 @@ public class Class {
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
 }
