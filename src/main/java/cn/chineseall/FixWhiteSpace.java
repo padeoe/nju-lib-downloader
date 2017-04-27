@@ -16,12 +16,16 @@ import java.util.List;
 public class FixWhiteSpace {
     public static void main(String[] args) {
         long begin = System.currentTimeMillis();
-        Arrays.asList(new File("D:\\ZJ\\Books").listFiles()).stream().parallel().forEach(file -> handleDir(file));
+        List<File> allDir = getAllDir(new File(args[0]));
+        System.out.println("总数本数 "+allDir.size());
+        allDir.parallelStream().forEach(file -> handleDir(file));
         System.out.println((System.currentTimeMillis() - begin) );
-      //  getAllDir("D:\\ZJ\\Books").forEach();
     }
 
     public static List<File> getAllDir(File rootDir){
+        if(rootDir.isFile()){
+            return null;
+        }
         List<File> result=new LinkedList<>();
         for (File subDir:rootDir.listFiles()){
             if(subDir.getName().startsWith("《")){
