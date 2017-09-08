@@ -1,15 +1,16 @@
 package cn.chineseall;
 
+import com.njulib.spider.BookDownloader;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
-import com.njulib.spider.BookDownloader;
 import utils.network.MyHttpRequest;
-import utils.network.ReturnData;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -97,8 +98,9 @@ public class Downloader {
     }
 
     public static void main(String[] args) {
+        args=new String[]{"hCiVg"};
         if (args != null && args.length > 0) {
-            Downloader bookDownloader = new Downloader(args[0], new CoreService("", ""));
+            Downloader bookDownloader = new Downloader(args[0], new CoreService("Maskeney", "147258"));
             bookDownloader.setThreadNumber(8);
            //   bookDownloader.setTmpPathDir(Paths.get("/mnt/f/tmp"));
             //  bookDownloader.setPath(Paths.get("/mnt/f/TP"));
@@ -116,6 +118,7 @@ public class Downloader {
         for (int i = 0; i < retryTime; i++) {
             try {
                 result = viewBookPageWeb(1);
+                break;
             } catch (IOException e) {
                 exception = e;
             }
@@ -133,8 +136,11 @@ public class Downloader {
             }
 
             Document doc = Jsoup.parse(result);
-
-            Elements nameNode = doc.select("[href=/book/" + book.getId() + "]");
+//<input type="hidden" id="bookId" name="bookId" value="10060645951"/>
+                    Elements idIntNode = doc.select("[id=bookId]");
+            String idInt = idIntNode.attr("value");
+            book.setIdInt(idInt);
+            Elements nameNode = doc.select("[href=/v3/book/detail/" + book.getId() + "]");
             book.setName(nameNode.get(0).text());
             setDirectory(book.getId());
             return true;
@@ -159,7 +165,8 @@ public class Downloader {
         if (cookie == null) {
             cookie = coreService.getSession();
         }
-        String result = MyHttpRequest.getWithCookie(CoreService.baseUrl + "/book/" + book.getId() + "/1/" + page, null, cookie, "UTF-8", 2000);
+        String url=CoreService.baseUrl + "/v3/book/read/" + book.getId() + "/PDF/" + page;
+        String result = MyHttpRequest.getWithCookie(url, null, cookie, "UTF-8", 2000);
         return result;
     }
 
@@ -642,7 +649,7 @@ public class Downloader {
         throw exception;
     }
 
-    public void downloadPageWithoutRetry(int page) throws IOException {
+/*    public void downloadPageWithoutRetry(int page) throws IOException {
         String m = getM(page);
         // Map<String,String> attr=new HashMap<>();
         //   attr.put("Referer","http://sxnju.chineseall.cn/book/"+bookId+"/1/"+page);
@@ -658,6 +665,47 @@ public class Downloader {
             bf.write(returnData.getData(), 0, returnData.getData().length);
             bf.close();
         }
+    }*/
+
+    public void downloadPageWithoutRetry(int page) throws IOException{
+        HttpURLConnection connection = (HttpURLConnection) new URL("http://sxqh.chineseall.cn/v3/book/content/"+book.getId()+"/pdf/"+page).openConnection();
+        connection.setRequestProperty("Accept", "*/*");
+        connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
+        connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.8");
+        connection.setRequestProperty("Cache-Control", "no-cache");
+        connection.setRequestProperty("Connection", "keep-alive");
+        connection.setRequestProperty("Cookie", cookie);
+        connection.setRequestProperty("Pragma", "no-cache");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");
+        connection.connect();
+        String location = connection.getHeaderField("Location");
+        String cookie = connection.getHeaderField("Set-Cookie");
+        cookie = cookie.substring(0, cookie.indexOf(';'));
+
+        connection = (HttpURLConnection) new URL(location).openConnection();
+        connection.setRequestProperty("Accept", "*/*");
+        connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
+        connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.8");
+        connection.setRequestProperty("Cache-Control", "no-cache");
+        connection.setRequestProperty("Connection", "keep-alive");
+        connection.setRequestProperty("Cookie", cookie);
+        connection.setRequestProperty("Pragma", "no-cache");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");
+        try (InputStream is = connection.getInputStream()) {
+
+            byte[] fileData = is.readAllBytes();
+            //System.out.println(new String(fileData));
+            File file = new File(directory.resolve(String.format("%04d", page) + ".pdf").toString());
+            if (fileData.length == 0) {
+                throw new IOException();
+            } else {
+                BufferedOutputStream bf = new BufferedOutputStream(new FileOutputStream(file));
+                bf.write(fileData, 0, fileData.length);
+                bf.close();
+            }
+        }
+
+
     }
 
     public Path getPath() {

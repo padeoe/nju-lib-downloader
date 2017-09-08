@@ -5,9 +5,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import utils.network.MyHttpRequest;
 
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,7 +27,7 @@ public class Class {
     }
     public int getBookSize() throws IOException {
         String url= CoreService.baseUrl+"/org/show/sort/"+id+"/0";
-        String result=MyHttpRequest.get(url,null,"UTF-8",3000);
+        String result= MyHttpRequest.get(url,null,"UTF-8",3000);
         return getBookSizeFromHtml(result);
     }
 

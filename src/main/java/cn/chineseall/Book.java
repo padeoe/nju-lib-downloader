@@ -16,6 +16,7 @@ import java.util.List;
  */
 public class Book {
     String id;
+    String idInt;
     String name;
     String press;
     String author;
@@ -29,6 +30,14 @@ public class Book {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getIdInt() {
+        return idInt;
+    }
+
+    public void setIdInt(String idInt) {
+        this.idInt = idInt;
     }
 
     public String getName() {
@@ -109,7 +118,9 @@ public class Book {
     public List<Node> getOutline() throws IOException {
         for(int i=0;i<20;i++){
             try {
-                String result=MyHttpRequest.get(CoreService.baseUrl+"/book/getDirectoryTree.jsps?bookId="+id+"&type=1",null,"UTF-8",3000);
+                String url=CoreService.baseUrl+"/book/getDirectoryTree.jsps?bookId="+idInt+"&type=PDF";
+                //http://sxnju.chineseall.cn/book/getDirectoryTree.jsps?bookId=10060602592&type=PDF&_=1504844448871
+                String result= MyHttpRequest.get(url,null,"UTF-8",3000);
                 result=result.replaceAll("\\\\r","");
                 result=result.replaceAll("\\\\n","");
                 result=result.replaceAll("\\\\","");
