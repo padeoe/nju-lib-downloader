@@ -380,4 +380,8 @@ public class Book {
             return true;
         return this.id.equals(((Book) obj).id);
     }
+
+    public com.njulib.object.Book cast(){
+        return new com.njulib.object.Book(id,name,author,publishDate,theme,null,null);
+    }
 }

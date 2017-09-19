@@ -13,6 +13,7 @@ import utils.network.MyHttpRequest;
 import utils.network.ReturnData;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -554,12 +555,14 @@ public class BookDownloader {
     }
 
     public static void writeFile(String filepath, String content) {
+        Writer fstream = null;
         try {
-            FileWriter writer = new FileWriter(filepath, true);
-            writer.write(content);
-            writer.write(System.getProperty("line.separator"));
-            writer.close();
-        } catch (IOException e) {
+            fstream = new OutputStreamWriter(new FileOutputStream(filepath, true), StandardCharsets.UTF_8);
+            fstream.write(content);
+            fstream.write(System.getProperty("line.separator"));
+            fstream.close();
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }

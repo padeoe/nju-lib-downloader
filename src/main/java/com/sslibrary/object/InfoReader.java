@@ -3,6 +3,7 @@ package com.sslibrary.object;
 import com.sslibrary.spider.BookDownloader;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -34,7 +35,7 @@ public class InfoReader {
      */
     public Book read() {
         try {
-            List<String> lines = Files.readAllLines(Paths.get(infoFilePath));
+            List<String> lines = Files.readAllLines(Paths.get(infoFilePath), StandardCharsets.UTF_8);
             String info = "";
             if (lines.size() > 0) {
                 info = lines.get(0);

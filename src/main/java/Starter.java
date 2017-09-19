@@ -1,10 +1,17 @@
+import com.sslibrary.object.Book;
+import com.sslibrary.spider.BookDownloader;
+import com.sslibrary.spider.PDFGenerator;
+import utils.conversion.PDFTool;
+
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by padeo on 2017/9/8.
  */
 public class Starter {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         if(args!=null&&args.length>0){
             String url=args[args.length-1];
             int thread_index=-1;
@@ -30,13 +37,22 @@ public class Starter {
             }
             else {
                 if(url.indexOf("img.sslibrary.com")!=-1){
-                    com.sslibrary.spider.BookDownloader bookDownloader = new com.sslibrary.spider.BookDownloader(url);
+                    BookDownloader bookDownloader = new BookDownloader(args[0]);
+                    bookDownloader.setThreadNumber(8);
                     bookDownloader.downloadAllImages();
-                    try {
-                        new com.sslibrary.spider.PDFGenerator(bookDownloader.getDirectory().toFile(),new File("."),bookDownloader.getBook()).make();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+
+                    Book originBook = bookDownloader.getBook();
+                    List<File> files = Arrays.asList(bookDownloader.getDirectory().toFile().listFiles());
+                    File infoFile = files.stream().filter(file -> file.getName().endsWith(".txt")).findAny().get();
+                    File originPDF = new File(bookDownloader.getDirectory().toString().concat("-tmp.pdf"));
+                    File outPDF = new File(bookDownloader.getDirectory().toString().concat(".pdf"));
+                    if (infoFile != null) {
+                        com.njulib.object.Book book = originBook.cast();
+                        PDFTool.generatePDFFromImage(files.stream().filter(file -> !file.getName().endsWith(".txt")).toArray(File[]::new), originPDF, book);
+                    } else
+                        PDFTool.generatePDFFromImage(files.stream().filter(file -> !file.getName().endsWith(".txt")).toArray(File[]::new), originPDF);
+                    bookDownloader.getOutline();
+                    PDFGenerator.addBookMark(bookDownloader.getBook(), originPDF.getPath(), outPDF.getPath());
                 }
                 else {
                     System.out.println("[ERROR] 未能识别的url，请输入chineseall.cn或者img.sslibrary.com开头的书本url");

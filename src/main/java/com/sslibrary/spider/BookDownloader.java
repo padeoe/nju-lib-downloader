@@ -11,6 +11,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import utils.conversion.PDFTool;
 import utils.network.MyHttpRequest;
 import utils.network.ReturnData;
 
@@ -239,10 +240,10 @@ public class BookDownloader {
             i++;
         }
         pageNumberMap.put(PageType.COVER, new PageRange(1, 1));
-       // pageNumberMap.put(PageType.BACKCOVER, new PageRange(2, 2));
+        // pageNumberMap.put(PageType.BACKCOVER, new PageRange(2, 2));
         int offset = html.indexOf("jpgPath: \"");
         if (offset != -1) {
-            String infoHtml= html.substring(offset + 10, html.length());
+            String infoHtml = html.substring(offset + 10, html.length());
             urlPrefix = infoHtml.substring(1, infoHtml.indexOf("\""));
         }
         if (i == 0) {
@@ -254,10 +255,10 @@ public class BookDownloader {
     private void setBookOutline(String html) {
         Document doc = Jsoup.parse(html);
         Elements outlinUrlNode = doc.select("embed[flashvars]");
-        if(outlinUrlNode!=null&&outlinUrlNode.size()>0){
-            this.book.setOutlineUrl("http://path.sslibrary.com/cat/cat2xml.dll?"+outlinUrlNode.get(0).attr("flashvars"));
+        if (outlinUrlNode != null && outlinUrlNode.size() > 0) {
+            this.book.setOutlineUrl("http://path.sslibrary.com/cat/cat2xml.dll?" + outlinUrlNode.get(0).attr("flashvars"));
             try {
-                book.setOutline(getOutline());;
+                book.setOutline(getOutline());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -266,17 +267,18 @@ public class BookDownloader {
     }
 
     public List<Node> getOutline() throws Exception {
-        if(outline==null){
-            if(book.getOutlineUrl()!=null){
-                String cookie="msign=108355219293367; username=202%2e119%2e40%2e134; account=; loginType=ip; deptid=275; enc=2779797e3110bdb55f543a009e56fffd; DSSTASH_LOG=C%5f34%2dUN%5f275%2dUS%5f%2d1%2dT%5f1493038679980";
-
-                cookie=getCookie();
+        if (outline == null) {
+            if (book.getOutlineUrl() == null) {
+                initialBookPara();
+            }
+            if (book.getOutlineUrl() != null) {
+                String cookie= getCookie();
                 try {
-                    String result=MyHttpRequest.getWithCookie(book.getOutlineUrl(),null,cookie,"UTF-8",3000);
+                    String result = MyHttpRequest.getWithCookie(book.getOutlineUrl(), null, cookie, "UTF-8", 3000);
 
                     Document doc = Jsoup.parse(result);
-                    Elements elements=doc.select("treeview");
-                    outline= parseTreeView(elements.get(0));
+                    Elements elements = doc.select("treeview");
+                    outline = parseTreeView(elements.get(0));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -285,14 +287,14 @@ public class BookDownloader {
         return outline;
     }
 
-    public List<Node> parseTreeView(Element element){
-        List<Node> nodes=new LinkedList<>();
-        for(int i=0;i<element.children().size();i++){
-            Element child=element.child(i);
-            if(child.nodeName().equals("tree")){
+    public List<Node> parseTreeView(Element element) {
+        List<Node> nodes = new LinkedList<>();
+        for (int i = 0; i < element.children().size(); i++) {
+            Element child = element.child(i);
+            if (child.nodeName().equals("tree")) {
                 nodes.add(parseTree(child));
             }
-            if(child.nodeName().equals("node")){
+            if (child.nodeName().equals("node")) {
                 nodes.add(parseNode(child));
             }
         }
@@ -300,36 +302,36 @@ public class BookDownloader {
     }
 
     private Node parseTree(Element treeElement) {
-        Node root=new Node();
+        Node root = new Node();
         root.setTitle(treeElement.attr("Caption"));
-        root.setPage(getPage(treeElement.attr("PageNumber"),treeElement.attr("PageType")));
+        root.setPage(getPage(treeElement.attr("PageNumber"), treeElement.attr("PageType")));
 
-        for(Element child:treeElement.children()){
-            if(child.nodeName().equals("node")){
+        for (Element child : treeElement.children()) {
+            if (child.nodeName().equals("node")) {
                 root.addChild(parseNode(child));
             }
-            if(child.nodeName().equals("tree")){
+            if (child.nodeName().equals("tree")) {
                 root.addChild(parseTree(child));
             }
         }
         return root;
     }
 
-    private Node parseNode(Element nodeElement){
-        Node result=new Node();
+    private Node parseNode(Element nodeElement) {
+        Node result = new Node();
         result.setTitle(nodeElement.attr("Caption"));
-        result.setPage(getPage(nodeElement.attr("PageNumber"),nodeElement.attr("PageType")));
+        result.setPage(getPage(nodeElement.attr("PageNumber"), nodeElement.attr("PageType")));
         return result;
     }
 
-    public  int getPage(String index,String type){
-        int index_int=Integer.parseInt(index);
-        int type_int=Integer.parseInt(type);
-        return getFirstPage(pageTypes[type_int-1])+index_int-1;
+    public int getPage(String index, String type) {
+        int index_int = Integer.parseInt(index);
+        int type_int = Integer.parseInt(type);
+        return getFirstPage(pageTypes[type_int - 1]) + index_int - 1;
     }
 
     private String getCookie() throws Exception {
-        String getCookieUrl="http://www.sslibrary.com/reader/jpath/jpathreader?ssid=13224709&d=d7a3c79ac6f9c58a134206e6a023b3f3&deptid=";
+        String getCookieUrl = "http://www.sslibrary.com/reader/jpath/jpathreader?ssid=13224709&d=d7a3c79ac6f9c58a134206e6a023b3f3&deptid=";
 
         java.net.URL url = new URL(getCookieUrl);
         HttpURLConnection connection = (HttpURLConnection) url
@@ -342,10 +344,10 @@ public class BookDownloader {
         utils.network.MyByteArray myByteArray = new utils.network.MyByteArray();
         Map<String, List<String>> headers = connection.getHeaderFields();
         connection.disconnect();
-        StringBuffer cookies=new StringBuffer();
-        for(String cookie:headers.get("Set-Cookie")){
-            String validCookie[]=cookie.split(";");
-            if(validCookie.length>0){
+        StringBuffer cookies = new StringBuffer();
+        for (String cookie : headers.get("Set-Cookie")) {
+            String validCookie[] = cookie.split(";");
+            if (validCookie.length > 0) {
                 cookies.append(validCookie[0]);
                 cookies.append(";");
             }
@@ -736,15 +738,26 @@ public class BookDownloader {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        args = new String[]{"http://img.sslibrary.com/n/slib/book/slib/12779860/109e76d24ce84ce7a4f84c42f41578b1/7673f90516a3f800198b2a5f0fb090e5.shtml?dxbaoku=false&deptid=275&fav=http%3A%2F%2Fwww.sslibrary.com%2Freader%2Fpdg%2Fpdgreader%3Fd%3D06ac48e4d20d78f32928d56c79fd935c%26ssid%3D12779860&fenlei=01070632&spage=1&t=5&username=58.192.48.21&view=-1"};
         if (args != null && args.length > 0) {
             BookDownloader bookDownloader = new BookDownloader(args[0]);
+            bookDownloader.setThreadNumber(8);
             bookDownloader.downloadAllImages();
-            try {
-                new PDFGenerator(bookDownloader.getDirectory().toFile(),new File("C:\\Users\\padeoe\\Desktop"),bookDownloader.getBook()).make();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+
+            Book originBook = bookDownloader.getBook();
+            List<File> files = Arrays.asList(bookDownloader.getDirectory().toFile().listFiles());
+            File infoFile = files.stream().filter(file -> file.getName().endsWith(".txt")).findAny().get();
+            File originPDF = new File(bookDownloader.getDirectory().toString().concat("-tmp.pdf"));
+            File outPDF = new File(bookDownloader.getDirectory().toString().concat(".pdf"));
+            if (infoFile != null) {
+                com.njulib.object.Book book = originBook.cast();
+                PDFTool.generatePDFFromImage(files.stream().filter(file -> !file.getName().endsWith(".txt")).toArray(File[]::new), originPDF, book);
+            } else
+                PDFTool.generatePDFFromImage(files.stream().filter(file -> !file.getName().endsWith(".txt")).toArray(File[]::new), originPDF);
+            bookDownloader.getOutline();
+            PDFGenerator.addBookMark(bookDownloader.book, originPDF.getPath(), outPDF.getPath());
+
         } else {
             System.out.println("需要至少一个参数:url 书本在线阅读地址");
         }
