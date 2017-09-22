@@ -327,7 +327,7 @@ public class Downloader {
             combinePDF_GhostScript(inputFileArray, 0, size, outputFile);
             PDFInfo.addBookMark(book, outputFile.getPath(), path.resolve(book.getName().replaceAll("[/\\\\:\"*?<>|]", " ") + ".pdf").toString());
             outputFile.delete();
-            BookDownloader.deleteDir(directory.toFile());
+            //BookDownloader.deleteDir(directory.toFile());
         } catch (MergeException e) {
             System.out.println(book.getName() + "合成开始[QPDF+PDFTK]");
             mergePDF2();
