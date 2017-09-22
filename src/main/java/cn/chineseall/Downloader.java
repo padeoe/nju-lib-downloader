@@ -313,6 +313,9 @@ public class Downloader {
 
     public void mergePDF() throws IOException, InterruptedException, MergeException, DecryptFail {
         File inputFileArray[] = directory.toFile().listFiles();
+        List<File> sorted = Arrays.asList(inputFileArray);
+        Collections.sort(sorted, Comparator.comparing(File::getName));
+        inputFileArray=sorted.toArray(new File[]{});
         inputFileArray = Arrays.asList(inputFileArray).stream()
                 .filter(file -> file.isFile() && file.getName().endsWith(".pdf"))
                 .toArray(File[]::new);
