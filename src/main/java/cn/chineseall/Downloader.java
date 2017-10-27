@@ -258,8 +258,8 @@ public class Downloader {
     public void downloadPages(List<Integer> pageNumbers) throws IOException {
         final int pageSize = pageNumbers.size();
         AtomicInteger tobeDownloadIndex = new AtomicInteger(0);
-
         ArrayList<Thread> threadArrayList = new ArrayList<>();
+        Object lock = new Object();
         for (int i = 0; i < threadNumber; i++) {
             threadArrayList.add(new Thread() {
                 @Override
@@ -270,6 +270,9 @@ public class Downloader {
                         if (downloadingIndex < pageSize) {
                             try {
                                 downloadPage(pageNumbers.get(downloadingIndex));
+                                synchronized(lock){
+                                    System.out.print("\r"+tobeDownloadIndex+"/"+pageSize+"    ");
+                                }
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 setHasError(true);
