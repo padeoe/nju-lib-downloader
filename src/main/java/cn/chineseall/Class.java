@@ -5,6 +5,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import utils.network.MyHttpRequest;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -55,7 +56,7 @@ public class Class {
     }
 
     public List<Book> getNewBooks(int page) {
-        String url= CoreService.baseUrl+"/org/show/selfsort/150/"+page;
+        String url= CoreService.baseUrl+"/org/show/sort/"+this.id+"/"+page;
         String result= null;
         try {
             result = MyHttpRequest.get(url,null,"UTF-8",3000);
@@ -66,7 +67,7 @@ public class Class {
     }
 
     public Stream<List<Book>> getNewBooks() throws IOException {
-        int size= getBookSizeFromHtml(MyHttpRequest.get(CoreService.baseUrl+"/org/show/selfsort/150/0",null,"UTF-8",3000));
+        int size= getBookSizeFromHtml(MyHttpRequest.get(CoreService.baseUrl+"/org/show/sort/"+this.id+"/0",null,"UTF-8",3000));
         int lastPage = size / 30 + 1;//最后一页的页码
         return IntStream.range(0,lastPage+1).parallel().mapToObj(page -> getNewBooks(page));
     }
@@ -142,7 +143,7 @@ public class Class {
             "<head><meta charset='UTF-8'></head>" +
             "<table border=\"1\">\n" +
             "<tr>\n" +
-            "  <th>编号</th>\n" +
+           /* "  <th>编号</th>\n" +*/
             "  <th>书名</th>\n" +
             "  <th>作者</th>\n" +
             "  <th>出版年份</th>\n" +
@@ -153,8 +154,9 @@ public class Class {
         if (book != null) {
             StringBuffer stringBuffer = new StringBuffer();
             stringBuffer.append("<tr>\n");
-            stringBuffer.append(getAttr(Book::getId, book));
-            stringBuffer.append(getAttr(Book::getName, book));
+            stringBuffer.append("<td><a target=\"_blank\" href=\"http://sxqh.chineseall.cn/v3/book/detail/"+book.getId()+"\">"+book.getName()+"</a></td>");
+//            stringBuffer.append(getAttr(Book::getId, book));
+            /*stringBuffer.append(getAttr(Book::getName, book));*/
             stringBuffer.append(getAttr(Book::getAuthor, book));
             stringBuffer.append(getAttr(Book::getPublishDate, book));
             stringBuffer.append(getAttr(Book::getPress, book));
@@ -174,14 +176,18 @@ public class Class {
         return stringBuffer.toString();
     }
     public static void main(String[] args) {
-/*        try {
+        try {
 
-            new Class("TP").getAllBooks().forEach(book -> output.append(getBookLineInTable(book)));
+            new Class("D9").getAllBooks().forEach(bookList ->
+                    bookList.forEach(book -> {
+                        output.append(getBookLineInTable(book));
+                    })
+            );
             output.append("</table>\n");
             output.append("</html>");
             FileWriter writer = null;
             try {
-                writer = new FileWriter("TP.html", false);
+                writer = new FileWriter("D9.html", false);
                 writer.write(output.toString());
                 writer.close();
             } catch (IOException e) {
@@ -190,7 +196,7 @@ public class Class {
 
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
+        }
     }
 
 }

@@ -30,7 +30,19 @@ public class yus {
         connection.setRequestProperty("Pragma", "no-cache");
         connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");
         try (InputStream is = connection.getInputStream()) {
-            System.out.println(new String(is.readAllBytes()));
+            utils.network.MyByteArray myByteArray = new utils.network.MyByteArray();
+            while (true) {
+                myByteArray.ensureCapacity(4096);
+                int len = is.read(myByteArray.getBuffer(), myByteArray.getOffset(), 4096);
+                if (len == -1) {
+                    break;
+                }
+                myByteArray.addOffset(len);
+            }
+            byte[] bytes = new byte[myByteArray.getSize()];
+            System.arraycopy(myByteArray.getBuffer(),0,bytes,0,bytes.length);
+            System.out.println(new String(bytes));
+            //System.out.println(new String(is.readAllBytes()));
         }
     }
 }

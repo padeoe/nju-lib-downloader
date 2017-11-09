@@ -10,13 +10,14 @@ import java.util.stream.Stream;
  */
 public class Batch {
     public static void main(String[] args) {
-        String className="TP";
+        String className="D9";
         if(args!=null&&args.length>0){
             className=args[0];
         }
         try {
             Stream<String> bookStream=new Class(className).getNewBooks().flatMap(books -> books.stream().map(Book::toString));
-            Files.write(Paths.get("C:\\Users\\padeoe\\Desktop\\book.txt"), (Iterable<String>)bookStream::iterator);
+            //bookStream.forEach(book-> System.out.println(book));
+            Files.write(Paths.get("C:\\Users\\padeo\\Desktop\\法律书籍.txt"), (Iterable<String>)bookStream::iterator);
 /*            System.out.println(className+"分类共"+books.size()+"本书");
             String finalClassName = className;
             books.parallelStream().*//*filter(book -> book.getAuthor().indexOf("(美")!=-1||book.getAuthor().indexOf("[美")!=-1).*//*forEach(book -> {

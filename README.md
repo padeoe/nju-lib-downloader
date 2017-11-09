@@ -5,7 +5,7 @@
 
 ## 依赖
 * 建议环境 linux，windows环境可以使用ubuntu子系统
-* **Java 9**
+* Java 8 +
 * GhostScript ，PDFTK，QPDF。
 
 ```

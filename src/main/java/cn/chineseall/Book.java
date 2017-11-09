@@ -189,7 +189,7 @@ public class Book {
         if(infoNode!=null){
             for(int i=0;i<infoNode.size();i++){
                 String id=null,name=null,author=null,publishDate=null,press=null,introduction=null,coverUrl=null;
-                Elements idNameNode=infoNode.get(i).select("a[target=_blank][title]");
+                Elements idNameNode=infoNode.get(i).select("a[href][title]");
                 if(idNameNode!=null&&idNameNode.size()>0){
                     Elements coverImageNode=infoNode.get(i).select("img[src]");
                     if(coverImageNode!=null&&coverImageNode.size()>0){
@@ -197,8 +197,9 @@ public class Book {
                     }
                     name=idNameNode.get(0).attr("title");
                     id=idNameNode.get(0).attr("href");
-                    if(id.indexOf("/book/")!=-1){
-                        id=id.substring(6,id.length());
+                    int id_index=id.indexOf("/book/detail/");
+                    if(id_index!=-1){
+                        id=id.substring(id_index+"/book/detail/".length(),id.length());
                     }
                     Elements pressNode=infoNode.get(i).select("span");
                     if(pressNode!=null&&pressNode.size()>0){

@@ -9,9 +9,9 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>1.9</maven.compiler.source>
-        <maven.compiler.target>1.9</maven.compiler.target>
-        <maven.compiler.release>9</maven.compiler.release>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.release>8</maven.compiler.release>
     </properties>
     <build>
         <plugins>
@@ -27,7 +27,7 @@
                 <configuration>
                     <toolchains>
                         <jdk>
-                            <version>1.9</version>
+                            <version>1.8</version>
                             <vendor>oracle</vendor>
                         </jdk>
                     </toolchains>
@@ -83,11 +83,7 @@
             <artifactId>pdftest</artifactId>
             <version>7.0.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.18</version>
-        </dependency>
+
         <dependency>
             <groupId>org.zeroturnaround</groupId>
             <artifactId>zt-exec</artifactId>
