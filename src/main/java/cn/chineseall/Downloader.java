@@ -218,7 +218,7 @@ public class Downloader {
             downloadPages(pageNumbers);
             if (!hasError) {
                 try {
-                    mergePDF();
+                    mergePDF2();
                     System.out.println(book.getName() + "的PDF合成结束");
                     return true;
                 } catch (InterruptedException e) {
@@ -271,7 +271,7 @@ public class Downloader {
                             try {
                                 downloadPage(pageNumbers.get(downloadingIndex));
                                 synchronized(lock){
-                                    System.out.print("\r"+tobeDownloadIndex+"/"+pageSize+"    ");
+                                    System.out.print("\r"+(downloadingIndex+1)+"/"+total+"    ");
                                 }
                             } catch (IOException e) {
                                 e.printStackTrace();
