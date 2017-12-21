@@ -16,15 +16,14 @@ import utils.network.MyHttpRequest;
 import utils.network.ReturnData;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.sslibrary.spider.NJULib.getSession;
 
@@ -32,7 +31,7 @@ import static com.sslibrary.spider.NJULib.getSession;
  * 书本的下载器，分离了下载相关的函数及变量。
  *
  * @author padeoe
- *         Date: 2016/12/09
+ * Date: 2016/12/09
  */
 public class BookDownloader {
     private String errorLogPath = ERROR_LOG_NAME;
@@ -51,7 +50,7 @@ public class BookDownloader {
     private Map<PageType, PageRange> pageNumberMap;
     private String savePath = System.getProperty("user.dir");
     private Path directory;
-    private List<Node>outline;
+    private List<Node> outline;
 
     public Path getDirectory() {
         return directory;
@@ -171,6 +170,17 @@ public class BookDownloader {
      */
     public static void downloadImage(String url, String pathname) throws IOException {
         ReturnData returnData = MyHttpRequest.action_returnbyte("GET", null, url, null, null, null, 2000);
+        handleImageConnection(returnData, pathname);
+    }
+
+    /**
+     * 处理下载图片的connection，存储图片
+     *
+     * @param returnData 服务器返回的数据
+     * @param pathname   图片的保存路径
+     * @throws IOException 下载出错
+     */
+    private static void handleImageConnection(ReturnData returnData, String pathname) throws IOException {
         byte[] a = returnData.getData();
         List<String> types = returnData.getHeaders().get("Content-Type");
         String suffix = ".png";
@@ -184,6 +194,101 @@ public class BookDownloader {
         bf.close();
     }
 
+    /**
+     * 把url的参数部分解析存储进map数据结构
+     *
+     * @param query url查询参数部分，URL.getQuery()获得的部分，譬如对于URL：http://aaa.com/s?wd=1&key=2,其查询参数部分是“wd=1&key=2”
+     * @return 存储了查询参数的map结构，键是参数名，值是参数值
+     */
+    private static Map<String, String> getQueryMap(String query) {
+        String[] params = query.split("&");
+        Map<String, String> map = new HashMap<String, String>();
+        for (String param : params) {
+            String name = param.split("=")[0];
+            String value = param.split("=")[1];
+            map.put(name, value);
+        }
+        return map;
+    }
+
+    /**
+     * 将查询参数的map转成String
+     *
+     * @param queryMap 查询参数的map，键是参数名，值是参数值
+     * @return 用&连接起来的url参数部分字符串
+     */
+    private static String toQuery(Map<String, String> queryMap) {
+        List<String> querys = queryMap.entrySet().stream().map(item -> item.getKey() + "=" + item.getValue()).collect(Collectors.toList());
+        return String.join("&", querys);
+    }
+
+    /**
+     * 下载超星图书的高分辨率的图片。
+     * <p>
+     * 超星图书馆网站上显示的图片默认并不是最清晰的，需要修改zoom参数能够获取到分辨率更高的版本
+     *
+     * @param url      图片的url
+     * @param pathname 保存的路径，包括文件名(不含图片后缀),例如"C:/Users/username/a"，函数执行后会保存为"C:/Users/username/a.png"
+     * @throws IOException 下载出错
+     */
+    public static void downloadImageHighResolution(String url, String pathname) throws IOException {
+        byte[] dataAsBytes = new byte[]{};
+        java.net.URL imageUrl = new URL(url);
+        HttpURLConnection connection = (HttpURLConnection) imageUrl
+                .openConnection(/*new Proxy(Proxy.Type.SOCKS, new InetSocketAddress("127.0.0.1", 1080))*/);
+        connection.setConnectTimeout(2000);
+        connection.setRequestMethod("GET");
+        connection.setInstanceFollowRedirects(false);
+        connection.connect();
+        String location, newUrl;
+        URL trueImageUrl, highResolutionImageUrl;
+        if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_PERM | connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
+            location = connection.getHeaderField("Location");
+            location = URLDecoder.decode(location, "UTF-8");
+            trueImageUrl = new URL(new URL(url), location);
+            String query = trueImageUrl.getQuery();
+            Map<String, String> queryMap = getQueryMap(query);
+            queryMap.put("zoom", "2");
+            String newQuery = toQuery(queryMap);
+            newUrl = trueImageUrl.toExternalForm().replaceAll(trueImageUrl.getQuery(), newQuery);
+
+            highResolutionImageUrl = new URL(newUrl);
+            connection = (HttpURLConnection) highResolutionImageUrl.openConnection();
+            connection.connect();
+        } else {
+            throw new IOException("获取失败");
+        }
+
+        //读取返回数据
+        utils.network.MyByteArray myByteArray = new utils.network.MyByteArray();
+
+        InputStream inputStream = null;
+        Map<String, List<String>> headers;
+        try {
+            inputStream = connection.getInputStream();
+            while (true) {
+                myByteArray.ensureCapacity(4096);
+                int len = inputStream.read(myByteArray.getBuffer(), myByteArray.getOffset(), 4096);
+                if (len == -1) {
+                    break;
+                }
+                myByteArray.addOffset(len);
+            }
+
+        } finally {
+            if (inputStream != null) {
+                {
+                    inputStream.close();
+                }
+            }
+        }
+        headers = connection.getHeaderFields();
+        connection.disconnect();
+        byte[] bytes = new byte[myByteArray.getSize()];
+        System.arraycopy(myByteArray.getBuffer(), 0, bytes, 0, bytes.length);
+        handleImageConnection(new ReturnData(bytes, headers), pathname);
+    }
+
 
     /**
      * 初始化下载参数，从服务器查询书本下载所需的参数,包括书页url，书本页数，页类型
@@ -195,21 +300,6 @@ public class BookDownloader {
         getBookPara();
     }
 
-/*    public String getBookViewPageHtml() throws BookDLException {
-        String url = onlineReadUrl;
-        if (url == null || url.length() == 0) {
-            throw new BookDLException(book);
-        }
-        //获取书本参数，包括下载地址前缀，页数
-        String html;
-        try {
-            html = MyHttpRequest.get(url, null, "UTF-8", 2000);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new BookDLException(book);
-        }
-        return html;
-    }*/
 
     public String getBookViewPageHtml() throws BookDLException {
         String url = onlineReadUrl;
@@ -272,7 +362,7 @@ public class BookDownloader {
                 initialBookPara();
             }
             if (book.getOutlineUrl() != null) {
-                String cookie= getCookie();
+                String cookie = getCookie();
                 try {
                     String result = MyHttpRequest.getWithCookie(book.getOutlineUrl(), null, cookie, "UTF-8", 3000);
 
@@ -571,6 +661,7 @@ public class BookDownloader {
                             //System.out.println("假装在下载 "+downloading);
                             try {
                                 download(PageType.CONTENT, downloading + pageNumberMap.get(PageType.CONTENT).start - 1, String.format("%04d", firstPage + downloading - 1));
+                                System.out.print("\r" + (downloading) + "/" + pageSize + "    ");
                             } catch (PageDLException e) {
                                 pageDLExceptions.add(e);
                             }
@@ -656,7 +747,8 @@ public class BookDownloader {
         String finalurl = url.toString();
         String pathname = directory.resolve(filename).toString();
         try {
-            downloadImage(finalurl, pathname);
+            //尝试下载高分辨率版本的书页图片
+            downloadImageHighResolution(finalurl, pathname);
         } catch (IOException e) {
             try {
                 downloadImage(finalurl, pathname);
