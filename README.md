@@ -28,4 +28,4 @@ apt-get install qpdf
 ```
 <h2>特别感谢</h2>
 
-![@Nifury](https://github.com/Nifury)
+[@Nifury](https://github.com/Nifury)
