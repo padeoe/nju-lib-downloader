@@ -271,7 +271,7 @@ public class Downloader {
                             try {
                                 downloadPage(pageNumbers.get(downloadingIndex));
                                 synchronized(lock){
-                                    System.out.print("\r"+(downloadingIndex+1)+"/"+total+"    ");
+                                    System.out.print("\r" + (tobeDownloadIndex.get()<=pageSize?tobeDownloadIndex:pageSize) + "/" + pageSize + "    ");
                                 }
                             } catch (IOException e) {
                                 e.printStackTrace();

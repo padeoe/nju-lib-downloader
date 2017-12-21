@@ -650,6 +650,7 @@ public class BookDownloader {
         needDownload.set(1);
         Vector<PageDLException> pageDLExceptions = new Vector<>();
         ArrayList<Thread> threadArrayList = new ArrayList<>();
+        Object lock = new Object();
         for (int i = 0; i < threadNumber; i++) {
             threadArrayList.add(new Thread() {
                 @Override
@@ -661,7 +662,9 @@ public class BookDownloader {
                             //System.out.println("假装在下载 "+downloading);
                             try {
                                 download(PageType.CONTENT, downloading + pageNumberMap.get(PageType.CONTENT).start - 1, String.format("%04d", firstPage + downloading - 1));
-                                System.out.print("\r" + (downloading) + "/" + pageSize + "    ");
+                                synchronized (lock) {
+                                    System.out.print("\r" + (needDownload.get()<=pageSize?needDownload:pageSize) + "/" + pageSize + "    ");
+                                }
                             } catch (PageDLException e) {
                                 pageDLExceptions.add(e);
                             }
@@ -831,7 +834,7 @@ public class BookDownloader {
     }
 
     public static void main(String[] args) throws Exception {
-        args = new String[]{"http://img.sslibrary.com/n/slib/book/slib/12779860/109e76d24ce84ce7a4f84c42f41578b1/7673f90516a3f800198b2a5f0fb090e5.shtml?dxbaoku=false&deptid=275&fav=http%3A%2F%2Fwww.sslibrary.com%2Freader%2Fpdg%2Fpdgreader%3Fd%3D06ac48e4d20d78f32928d56c79fd935c%26ssid%3D12779860&fenlei=01070632&spage=1&t=5&username=58.192.48.21&view=-1"};
+        args = new String[]{"http://img.sslibrary.com/n/slib/book/slib/10184473/aeff27db28a74a4eb237cd909ea25ad1/50f62de7277b38d71f4f0a809a7f77a6.shtml?dxbaoku=false&deptid=275&fav=http%3A%2F%2Fwww.sslibrary.com%2Freader%2Fpdg%2Fpdgreader%3Fd%3D76120f9ef29484ca9c18947d85d9a849%26ssid%3D10184473&fenlei=18060202&spage=1&t=5&username=58.192.49.134&view=-1"};
         if (args != null && args.length > 0) {
             BookDownloader bookDownloader = new BookDownloader(args[0]);
             bookDownloader.setThreadNumber(8);
