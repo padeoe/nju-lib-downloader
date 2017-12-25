@@ -47,6 +47,9 @@ public class PDFTool {
     }
 
     public static void generatePDFFromImage(File[] inputImage,File outputPDF,Book book) throws FileNotFoundException{
+        List<File> sorted = Arrays.asList(inputImage);
+        Collections.sort(sorted, Comparator.comparing(File::getName));
+        inputImage=sorted.toArray(new File[]{});
         List<Image>images=new LinkedList<>();
         boolean hasException=false;
         for(File file:inputImage){
