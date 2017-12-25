@@ -11,34 +11,43 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.compiler.release>8</maven.compiler.release>
     </properties>
     <build>
         <plugins>
-            <plugin>
+
+<!--            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-toolchains-plugin</artifactId>
-                <version>1.1</version>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
                 <configuration>
-                    <toolchains>
-                        <jdk>
-                            <version>1.8</version>
-                            <vendor>oracle</vendor>
-                        </jdk>
-                    </toolchains>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.sslibrary.spider.BookDownloader</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
+            </plugin>-->
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
                     <execution>
+                        <phase>package</phase>
                         <goals>
-                            <goal>toolchain</goal>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>Starter</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -53,31 +62,55 @@
             <artifactId>jsoup</artifactId>
             <version>1.8.3</version>
         </dependency>
+        <!-- always needed -->
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>kernel</artifactId>
-            <version>7.0.2</version>
+            <version>7.1.0</version>
         </dependency>
+
+        <!-- always needed -->
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>io</artifactId>
-            <version>7.0.2</version>
+            <version>7.1.0</version>
         </dependency>
+
+        <!-- always needed -->
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>layout</artifactId>
-            <version>7.0.2</version>
+            <version>7.1.0</version>
         </dependency>
+
+        <!-- only needed for forms -->
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>forms</artifactId>
-            <version>7.0.2</version>
+            <version>7.1.0</version>
         </dependency>
+
+        <!-- only needed for PDF/A -->
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>pdfa</artifactId>
-            <version>7.0.2</version>
+            <version>7.1.0</version>
         </dependency>
+
+        <!-- only needed for digital signatures -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>sign</artifactId>
+            <version>7.1.0</version>
+        </dependency>
+
+        <!-- only needed for Asian fonts -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>font-asian</artifactId>
+            <version>7.1.0</version>
+        </dependency>
+
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>pdftest</artifactId>
