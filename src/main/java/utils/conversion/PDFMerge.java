@@ -1,13 +1,14 @@
 package utils.conversion;
 
-import com.itextpdf.kernel.pdf.*;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfReader;
+import com.itextpdf.kernel.pdf.PdfWriter;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class PDFMerge {
 
@@ -15,10 +16,10 @@ public class PDFMerge {
         PDFMergerUtility PDFmerger = new PDFMergerUtility();
         PDFmerger.setDestinationFileName(outFilePath.toString());
         for (File file : pdfs) PDFmerger.addSource(file);
-        PDFmerger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+        PDFmerger.mergeDocuments(MemoryUsageSetting.setupMixed(1024 * 1024 * 500));
     }
 
-    public static void compressPDF(Path originPDF,Path outfilePath) throws IOException{
+    public static void compressPDF(Path originPDF, Path outfilePath) throws IOException {
         PdfReader pdfReader = new PdfReader(originPDF.toString());
         PdfDocument inputPdfDoc = new PdfDocument(pdfReader);
         File outputPDF = new File(outfilePath.toString());
