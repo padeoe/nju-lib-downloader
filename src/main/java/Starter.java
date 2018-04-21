@@ -12,6 +12,7 @@ import java.util.List;
  */
 public class Starter {
     public static void main(String[] args) throws Exception {
+        System.setProperty("sun.java2d.cmm", "sun.java2d.cmm.kcms.KcmsServiceProvider");
         if (args != null && args.length > 0) {
             String url = args[args.length - 1];
             int thread_index = -1;

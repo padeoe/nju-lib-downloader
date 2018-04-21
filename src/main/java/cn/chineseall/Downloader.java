@@ -6,6 +6,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
+import utils.conversion.PDFMerge;
 import utils.network.MyHttpRequest;
 
 import java.io.*;
@@ -98,11 +99,11 @@ public class Downloader {
     }
 
     public static void main(String[] args) {
-        args=new String[]{"hCiVg"};
+        args = new String[]{"hCiVg"};
         if (args != null && args.length > 0) {
             Downloader bookDownloader = new Downloader(args[0], new CoreService("Maskeney", "147258"));
             bookDownloader.setThreadNumber(8);
-           //   bookDownloader.setTmpPathDir(Paths.get("/mnt/f/tmp"));
+            //   bookDownloader.setTmpPathDir(Paths.get("/mnt/f/tmp"));
             //  bookDownloader.setPath(Paths.get("/mnt/f/TP"));
             long begin = System.currentTimeMillis();
             bookDownloader.downloadBook();
@@ -137,7 +138,7 @@ public class Downloader {
 
             Document doc = Jsoup.parse(result);
 //<input type="hidden" id="bookId" name="bookId" value="10060645951"/>
-                    Elements idIntNode = doc.select("[id=bookId]");
+            Elements idIntNode = doc.select("[id=bookId]");
             String idInt = idIntNode.attr("value");
             book.setIdInt(idInt);
             Elements nameNode = doc.select("[href=/v3/book/detail/" + book.getId() + "]");
@@ -165,7 +166,7 @@ public class Downloader {
         if (cookie == null) {
             cookie = coreService.getSession();
         }
-        String url=CoreService.baseUrl + "/v3/book/read/" + book.getId() + "/PDF/" + page;
+        String url = CoreService.baseUrl + "/v3/book/read/" + book.getId() + "/PDF/" + page;
         String result = MyHttpRequest.getWithCookie(url, null, cookie, "UTF-8", 2000);
         return result;
     }
@@ -211,29 +212,22 @@ public class Downloader {
     }
 
     public boolean downloadandMerge(List<Integer> pageNumbers) {
-        try {
-            if (pageNumbers.size() > 0) {
-                System.out.println("开始下载" + book.toString());
-            }
-            downloadPages(pageNumbers);
-            if (!hasError) {
-                try {
-                    mergePDF2();
-                    System.out.println(book.getName() + "的PDF合成结束");
-                    return true;
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (DecryptFail decryptFail) {
-                    decryptFail.printStackTrace();
-                } catch (MergeException e) {
-                    e.printStackTrace();
-                }
-            }
-            return false;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
+
+        if (pageNumbers.size() > 0) {
+            System.out.println("开始下载" + book.toString());
         }
+        downloadPages(pageNumbers);
+        if (!hasError) {
+            try {
+                mergePDF();
+                System.out.println(book.getName() + "的PDF合成结束");
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+
     }
 
     private boolean handleExistDir(File existDir) {
@@ -255,7 +249,7 @@ public class Downloader {
 
     }
 
-    public void downloadPages(List<Integer> pageNumbers) throws IOException {
+    public void downloadPages(List<Integer> pageNumbers) {
         final int pageSize = pageNumbers.size();
         AtomicInteger tobeDownloadIndex = new AtomicInteger(0);
         ArrayList<Thread> threadArrayList = new ArrayList<>();
@@ -270,8 +264,8 @@ public class Downloader {
                         if (downloadingIndex < pageSize) {
                             try {
                                 downloadPage(pageNumbers.get(downloadingIndex));
-                                synchronized(lock){
-                                    System.out.print("\r" + (tobeDownloadIndex.get()<=pageSize?tobeDownloadIndex:pageSize) + "/" + pageSize + "    ");
+                                synchronized (lock) {
+                                    System.out.print("\r" + (tobeDownloadIndex.get() <= pageSize ? tobeDownloadIndex : pageSize) + "/" + pageSize + "    ");
                                 }
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -314,11 +308,30 @@ public class Downloader {
         return output.toString();
     }
 
-    public void mergePDF() throws IOException, InterruptedException, MergeException, DecryptFail {
+    public void mergePDF() throws MergeException{
+        File inputFileArray[] = directory.toFile().listFiles();
+        Arrays.sort(inputFileArray, Comparator.comparing(File::getName));
+        inputFileArray = Arrays.asList(inputFileArray).stream().filter(file -> file.isFile() && file.getName().endsWith(".pdf")).toArray(File[]::new);
+        System.out.println("将PDF合并成一个文件");
+        Path tmpFile = tmpPathDir.resolve(book.getId() + "-tmp.pdf");
+        Path outFile = tmpPathDir.resolve(book.getId() + ".pdf");
+        try {
+            PDFMerge.mergePDFs(inputFileArray, tmpFile);
+            PDFMerge.compressPDF(tmpFile, outFile);
+            PDFInfo.addBookMark(book, outFile.toString(), path.resolve(book.getName().replaceAll("[/\\\\:\"*?<>|]", " ") + ".pdf").toString());
+            tmpFile.toFile().delete();
+            outFile.toFile().delete();
+        } catch (IOException e) {
+            throw new MergeException();
+        }
+    }
+
+    @Deprecated
+    public void mergePDF_Old() throws IOException, InterruptedException, MergeException, DecryptFail {
         File inputFileArray[] = directory.toFile().listFiles();
         List<File> sorted = Arrays.asList(inputFileArray);
         Collections.sort(sorted, Comparator.comparing(File::getName));
-        inputFileArray=sorted.toArray(new File[]{});
+        inputFileArray = sorted.toArray(new File[]{});
         inputFileArray = Arrays.asList(inputFileArray).stream()
                 .filter(file -> file.isFile() && file.getName().endsWith(".pdf"))
                 .toArray(File[]::new);
@@ -338,6 +351,7 @@ public class Downloader {
 
     }
 
+    @Deprecated
     public void mergePDF2() throws IOException, InterruptedException, DecryptFail, MergeException {
         Path decryptDir = directory.resolve("decrypt");
         if (!decryptDir.toFile().exists()) {
@@ -360,7 +374,6 @@ public class Downloader {
         PDFInfo.addBookMark(book, outputFile.getPath(), path.resolve(book.getName().replaceAll("[/\\\\:\"*?<>|]", " ") + ".pdf").toString());
         outputFile.delete();
     }
-
 
 
     private static void RunProcess(String[] commands) throws Exception {
@@ -673,8 +686,8 @@ public class Downloader {
         }
     }*/
 
-    public void downloadPageWithoutRetry(int page) throws IOException{
-        HttpURLConnection connection = (HttpURLConnection) new URL("http://sxqh.chineseall.cn/v3/book/content/"+book.getId()+"/pdf/"+page).openConnection();
+    public void downloadPageWithoutRetry(int page) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL("http://sxqh.chineseall.cn/v3/book/content/" + book.getId() + "/pdf/" + page).openConnection();
         connection.setRequestProperty("Accept", "*/*");
         connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
         connection.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.8");
@@ -709,7 +722,7 @@ public class Downloader {
                 myByteArray.addOffset(len);
             }
             byte[] bytes = new byte[myByteArray.getSize()];
-            System.arraycopy(myByteArray.getBuffer(),0,bytes,0,bytes.length);
+            System.arraycopy(myByteArray.getBuffer(), 0, bytes, 0, bytes.length);
 
             //byte[] fileData = is.readAllBytes();
             byte[] fileData = bytes;
