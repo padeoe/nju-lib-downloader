@@ -113,6 +113,11 @@ public class Downloader {
         }
     }
 
+    /**
+     * 初始化书的下载元信息。包括书本id，书的名称等。
+     *
+     * @return
+     */
     public boolean initBookPara() {
         String result = null;
         IOException exception = null;
@@ -137,12 +142,14 @@ public class Downloader {
             }
 
             Document doc = Jsoup.parse(result);
-//<input type="hidden" id="bookId" name="bookId" value="10060645951"/>
             Elements idIntNode = doc.select("[id=bookId]");
             String idInt = idIntNode.attr("value");
             book.setIdInt(idInt);
             Elements nameNode = doc.select("[href=/v3/book/detail/" + book.getId() + "]");
-            book.setName(nameNode.get(0).text());
+            if (nameNode != null && nameNode.size() > 0)
+                book.setName(nameNode.get(0).text());
+            else
+                return false;
             setDirectory(book.getId());
             return true;
         } else {
