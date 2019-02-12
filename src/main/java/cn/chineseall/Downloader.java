@@ -174,7 +174,7 @@ public class Downloader {
             cookie = coreService.getSession();
         }
         String url = CoreService.baseUrl + "/v3/book/read/" + book.getId() + "/PDF/" + page;
-        String result = MyHttpRequest.getWithCookie(url, null, cookie, "UTF-8", 2000);
+        String result = MyHttpRequest.getWithCookie(url, null, null, "UTF-8", 2000);
         return result;
     }
 
