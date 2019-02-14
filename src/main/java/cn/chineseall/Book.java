@@ -178,7 +178,7 @@ public class Book {
     protected Node parseA(Element aElement) {
         Node result = new Node();
         String nodeTitle = aElement.text();
-        if (nodeTitle.charAt(nodeTitle.length() - 5) == 'u') {
+        if (nodeTitle.length() > 5 && nodeTitle.charAt(nodeTitle.length() - 5) == 'u') {
             nodeTitle = nodeTitle.substring(0, nodeTitle.length() - 5);
         }
 
