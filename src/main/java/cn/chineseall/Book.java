@@ -121,6 +121,7 @@ public class Book {
                 String url = CoreService.baseUrl + "/book/getDirectoryTree.jsps?bookId=" + idInt + "&type=PDF";
                 //http://sxnju.chineseall.cn/book/getDirectoryTree.jsps?bookId=10060602592&type=PDF&_=1504844448871
                 String result = MyHttpRequest.get(url, null, "UTF-8", 3000);
+                result = result.replaceAll("\\\\u\\d+", "");
                 result = result.replaceAll("\\\\r", "");
                 result = result.replaceAll("\\\\n", "");
                 result = result.replaceAll("\\\\", "");
@@ -178,9 +179,6 @@ public class Book {
     protected Node parseA(Element aElement) {
         Node result = new Node();
         String nodeTitle = aElement.text();
-        if (nodeTitle.length() > 5 && nodeTitle.charAt(nodeTitle.length() - 5) == 'u') {
-            nodeTitle = nodeTitle.substring(0, nodeTitle.length() - 5);
-        }
 
         result.setTitle(nodeTitle);
         result.setPage(Integer.parseInt(aElement.attr("rel")));
