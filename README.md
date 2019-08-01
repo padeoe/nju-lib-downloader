@@ -9,7 +9,7 @@
 ## 使用方法
 在 [release](https://github.com/padeoe/nju-lib-downloader/releases) 中下载发布的 jar 包，执行以下命令：
 ```
-用法: java -jar libpdf.jar [options] <url>
+用法: java -jar libpdf.jar [options] url
 
 其中选项包括:
    -t 线程数量
@@ -21,7 +21,7 @@
 ### Docker
 
 ```
-docker run --rm -t -v "$PWD":/ebook padeoe/nju-lib-downloader "http://sxnju.chineseall.cn/v3/book/detail/h44Zj"
+docker run --rm -v "$PWD":/ebook padeoe/nju-lib-downloader url
 ```
 
 <h2>特别感谢</h2>
