@@ -17,6 +17,13 @@
 示例: java -jar libpdf.jar http://sxnju.chineseall.cn/v3/book/detail/VPeZj
       java -jar libpdf.jar http://img.sslibrary.com/n/slib/book/slib/10649113/65873989af6f4d809862aa11b16f650c/0e71a4d58ffba4e1b202d4b3fb30a81a.shtml?dxbaoku=false&deptid=275&fav=http%3A%2F%2Fwww.sslibrary.com%2Freader%2Fpdg%2Fpdgreader%3Fd%3Da1b248ecb4a78ba2087d8b5d0c5c950d%26ssid%3D10649113&fenlei=080401&spage=1&t=5&username=xxxxxx&view=-1
 ```
+
+### Docker
+
+```
+docker run --rm -t -v "$PWD":/ebook padeoe/nju-lib-downloader "http://sxnju.chineseall.cn/v3/book/detail/h44Zj"
+```
+
 <h2>特别感谢</h2>
 
 [@Nifury](https://github.com/Nifury)
