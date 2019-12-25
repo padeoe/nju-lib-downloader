@@ -1,5 +1,7 @@
 package cn.chineseall;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -121,11 +123,8 @@ public class Book {
                 String url = CoreService.baseUrl + "/book/getDirectoryTree.jsps?bookId=" + idInt + "&type=PDF";
                 //http://sxnju.chineseall.cn/book/getDirectoryTree.jsps?bookId=10060602592&type=PDF&_=1504844448871
                 String result = MyHttpRequest.get(url, null, "UTF-8", 3000);
-                result = result.replaceAll("\\\\u\\d+", "");
-                result = result.replaceAll("\\\\r", "");
-                result = result.replaceAll("\\\\n", "");
-                result = result.replaceAll("\\\\", "");
-                result = result.substring(result.indexOf("{\"data\":\"") + "{\"data\":\"".length(), result.indexOf("\",\"success\":true,\"msg\":\"\"}"));
+
+                result = new ObjectMapper().readValue(result, ObjectNode.class).get("data").textValue();
 
                 Document doc = Jsoup.parse(result);
                 Elements elements = doc.select("ul[id=directoryTree]");

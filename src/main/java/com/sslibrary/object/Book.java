@@ -4,7 +4,6 @@ import cn.chineseall.Node;
 import com.sslibrary.object.exception.BookDLException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import com.sslibrary.spider.BookDownloader;
 import com.sslibrary.spider.NJULib;
@@ -13,7 +12,6 @@ import utils.network.MyHttpRequest;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * 图书。
@@ -345,7 +343,7 @@ public class Book {
      */
     public void download(String pathname, int threadNumber,String onlineReadUrl) {
         BookDownloader bookDownloader = new BookDownloader(this,onlineReadUrl);
-        bookDownloader.setSavePath(pathname);
+        bookDownloader.setPath(pathname);
         bookDownloader.setThreadNumber(threadNumber);
         bookDownloader.downloadAllImages();
     }
@@ -360,7 +358,7 @@ public class Book {
      */
     public void download(String pathname, int threadNumber, String onlineReadUrl,String errorLogPath) {
         BookDownloader bookDownloader = new BookDownloader(this,onlineReadUrl);
-        bookDownloader.setSavePath(pathname);
+        bookDownloader.setPath(pathname);
         bookDownloader.setThreadNumber(threadNumber);
         bookDownloader.setErrorLogPath(errorLogPath);
         bookDownloader.downloadAllImages();

@@ -16,7 +16,10 @@ import utils.network.MyHttpRequest;
 import utils.network.ReturnData;
 
 import java.io.*;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -24,8 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static com.sslibrary.spider.NJULib.getSession;
 
 /**
  * 书本的下载器，分离了下载相关的函数及变量。
@@ -36,6 +37,7 @@ import static com.sslibrary.spider.NJULib.getSession;
 public class BookDownloader {
     private String errorLogPath = ERROR_LOG_NAME;
     private int threadNumber = 5;
+    private Path directory;
 
     /**
      * 获取下载器对应的{@code Book}
@@ -48,16 +50,21 @@ public class BookDownloader {
 
     private Book book;
     private Map<PageType, PageRange> pageNumberMap;
-    private String savePath = System.getProperty("user.dir");
-    private Path directory;
+
+    private String normalizedBookName;
+    private String path = System.getProperty("user.dir");
+    private Path tmpPath = Paths.get(System.getProperty("user.dir")).resolve("tmp");
     private List<Node> outline;
 
-    public Path getDirectory() {
-        return directory;
+    public Path getTmpPath() {
+        return tmpPath;
     }
 
-    public void setDirectory(Path directory) {
-        this.directory = directory;
+    public void setTmpPath(Path tmpPath) {
+        this.tmpPath = tmpPath;
+        if (!tmpPath.toFile().exists() || !tmpPath.toFile().isDirectory()) {
+            tmpPath.toFile().mkdirs();
+        }
     }
 
     private String urlPrefix;
@@ -148,17 +155,26 @@ public class BookDownloader {
      * @param directoryString 文件夹名
      */
     public void setDirectory(String directoryString) {
-        String directoryName = directoryString.replaceAll("[/\\\\:\"*?<>|]", " ");
-        directory = Paths.get(savePath, directoryName);
+        normalizedBookName = directoryString.replaceAll("[/\\\\:\"*?<>|]", " ");
+        directory = tmpPath.resolve(normalizedBookName);
     }
 
     /**
      * 设置保存路径
      *
-     * @param savePath 下载保存路径
+     * @param path 下载保存路径
      */
-    public void setSavePath(String savePath) {
-        this.savePath = savePath;
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    /**
+     * 获取pdf保存目录
+     *
+     * @return 下载保存目录
+     */
+    public String getPath() {
+        return path;
     }
 
     /**
@@ -573,14 +589,13 @@ public class BookDownloader {
             }
         } else {
             //info文件不存在，比对书本页数数量是否是同一本书决定下一步操作
-            //   checkOldDirByPageSize();
+//            checkOldDirByPageSize();
             System.out.println("将删除没有info文件的目录" + directory.getFileName());
             if (deleteDir(directory.toFile())) {
                 downloadFromMkdir();
             } else {
                 throw new BookDLException(this.book);
             }
-
         }
     }
 
@@ -622,6 +637,31 @@ public class BookDownloader {
         }
     }
 
+    /**
+     * 下载整本书籍，输出pdf
+     */
+    public void downloadBook() throws Exception {
+        setDirectory(this.book.getName());
+        Path outPDFPath = Paths.get(this.getPath()).resolve(this.normalizedBookName + ".pdf");
+        if (Files.exists(outPDFPath)) {
+            System.out.println(this.book.getName() + " 已存在，跳过");
+            return;
+        }
+        downloadAllImages();
+        Book originBook = this.getBook();
+        List<File> files = Arrays.asList(this.directory.toFile().listFiles());
+        File infoFile = files.stream().filter(file -> file.getName().endsWith(".txt")).findAny().get();
+        File originPDF = new File(this.directory.toString().concat("-tmp.pdf"));
+
+        if (infoFile != null) {
+            com.njulib.object.Book book = originBook.cast();
+            PDFTool.generatePDFFromImage(files.stream().filter(file -> !file.getName().endsWith(".txt")).toArray(File[]::new), originPDF, book);
+        } else
+            PDFTool.generatePDFFromImage(files.stream().filter(file -> !file.getName().endsWith(".txt")).toArray(File[]::new), originPDF);
+        this.getOutline();
+        PDFGenerator.addBookMark(this.book, originPDF.getPath(), outPDFPath.toString());
+        originPDF.delete();
+    }
 
     /**
      * 在同文件夹下创建记录{@code Book}信息的文件，
@@ -663,7 +703,7 @@ public class BookDownloader {
                             try {
                                 download(PageType.CONTENT, downloading + pageNumberMap.get(PageType.CONTENT).start - 1, String.format("%04d", firstPage + downloading - 1));
                                 synchronized (lock) {
-                                    System.out.print("\r" + (needDownload.get()<=pageSize?needDownload:pageSize) + "/" + pageSize + "    ");
+                                    System.out.print("\r" + (needDownload.get() <= pageSize ? needDownload : pageSize) + "/" + pageSize + "    ");
                                 }
                             } catch (PageDLException e) {
                                 pageDLExceptions.add(e);
@@ -841,10 +881,10 @@ public class BookDownloader {
             bookDownloader.downloadAllImages();
 
             Book originBook = bookDownloader.getBook();
-            List<File> files = Arrays.asList(bookDownloader.getDirectory().toFile().listFiles());
+            List<File> files = Arrays.asList(bookDownloader.getTmpPath().toFile().listFiles());
             File infoFile = files.stream().filter(file -> file.getName().endsWith(".txt")).findAny().get();
-            File originPDF = new File(bookDownloader.getDirectory().toString().concat("-tmp.pdf"));
-            File outPDF = new File(bookDownloader.getDirectory().toString().concat(".pdf"));
+            File originPDF = new File(bookDownloader.getTmpPath().toString().concat("-tmp.pdf"));
+            File outPDF = new File(bookDownloader.getTmpPath().toString().concat(".pdf"));
             if (infoFile != null) {
                 com.njulib.object.Book book = originBook.cast();
                 PDFTool.generatePDFFromImage(files.stream().filter(file -> !file.getName().endsWith(".txt")).toArray(File[]::new), originPDF, book);
